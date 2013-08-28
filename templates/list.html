@@ -1,23 +1,27 @@
 <!doctype HTML>
 <html>
     <head>
-        <title>CodingTest To-do List</title>
+        <title>Community Playlist</title>
         <meta charset="utf-8" />
         <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}" type="text/css" />
     </head>
     <body>
         <div id="container">
-            <h1>Community Song PlayList</h1>
+            <span id="title">Community PlayList</span>
+            <br>
          {% if session.logged_in %}
-        <div id="player"></div>
+         Você está logado!
         {% endif %}
+        <div id="player"></div>
 		<br>
-		<input id="startPL" type=submit value=Start>
-		<input id="pausePL" type=submit value=Pause>
-                <input id="newSongUrl" type="text" />
-                <input id="addNewSong" type="submit" value="Adicionar na playlist"/>
+		<input id="startPL" type="submit" value=Start>
+		<input id="pausePL" type="submit" value=Pause>
+        <input id="next" type="submit" value=">>">
 		<br>
-		<input id="upd" type=submit value="Atualizar">
+        <input id="newSongUrl" type="text" />
+        <input id="addNewSong" type="submit" value="Add"/>
+		<br>
+		<input id="upd" type="submit" value="Atualizar">
 		<br>
  		<ul id="show-items"></ul>
             <a href="#" id="clear-all">Clear All</a>
@@ -38,7 +42,7 @@
                 player = new YT.Player('player', {
                   height: '390',
                   width: '640',
-                  videoId: 'JW5meKfy3fY',
+                  videoId: 'dQw4w9WgXcQ',
                   events: {
                     'onReady': onPlayerReady,
                     'onStateChange': onPlayerStateChange
@@ -53,15 +57,17 @@
                 }
             }
             $("#startPL").click(function(){
-                if(player.getPlayerState() == 2){
+                if(player.getPlayerState() == YT.PlayerState.PAUSED){
                     player.playVideo();
-                }else{
-                    playNextVideo();
                 }
             });
 
             $("#pausePL").click(function(){
                 player.pauseVideo();
+            });
+
+            $("#next").click(function(){
+                playNextVideo();
             });
             function playVideoByUrl(url){
                 player.loadVideoByUrl(url);
@@ -70,9 +76,11 @@
                 $.getJSON( SCRIPT_ROOT + '/_next',
                         {},
                         function(item){
-                            console.log("Recebi "+item);
+                                console.log("Proximo video "+item);
+                            if(item != null){
                                 playVideoByUrl(item);
                                 update_function();
+                            }
                         })
             };
             function onPlayerReady(evt) {
@@ -82,7 +90,7 @@
             };
             function onPlayerStateChange(evt) {
                 console.log('new state '+evt.data)
-                if (evt.data == 0) {
+                if (evt.data == YT.PlayerState.ENDED) {
                     playNextVideo();
                 }
             };

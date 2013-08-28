@@ -17,19 +17,24 @@ h1 {
     text-align: center;
     margin: 20px auto;
 }
+#title{    
+    font-weight: 700;
+    font-size: 40px;
+    margin: 20px 0;
+}
 input[type="text"] {
     height: 30px;
-    width: 350px;
-    padding: 10px;
+    width: 450px;
+    padding: 2px;
     margin-right: 10px;
-    font-size: 24px;
+    font-size: 12px;
 }
 input[type="submit"] {
-    height: 56px;
-    padding: 10px;
+    height: 30px;
+    padding: 5px;
     border: 1px solid #333;
     background-color: #ccc;
-    font-size: 24px;
+    font-size: 18px;
     cursor: pointer;
     outline: none;
 }

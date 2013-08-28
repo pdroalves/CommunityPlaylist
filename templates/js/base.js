@@ -1,7 +1,7 @@
 var playing = 0;
 var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 var itemList = $('#show-items');
-
+var removeLink =$('#show-items li span a');
 
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
@@ -41,7 +41,9 @@ var add_function = function(newItem){
 var rm_function = function(item){
             $.getJSON( SCRIPT_ROOT+'/_rm_url',
                 {element:item},
-                update_function()
+                function(n){
+                    update_function()
+                }
             )            
         };
 
@@ -68,6 +70,17 @@ $("#addNewSong").click(function(){
       //  update_function();
         button.value = "";
     });
+
+// Remove todo
+itemList.delegate("a", "click", function(e) {
+    var $this = $(this);
+ 
+    remove_item($this);
+});
+
+var remove_item = function($this){
+    rm_function($this.parent().text().replace(' x',''));
+};
 
 $("#clear-all").click(function(){
      $.getJSON(    SCRIPT_ROOT+'/_clear-all',

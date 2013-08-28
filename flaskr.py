@@ -1,19 +1,13 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""
-    Flaskr
-    ~~~~~~
-
-    A microblog example application written as Flask tutorial with
-    Flask and sqlite3.
-
-    :copyright: (c) 2010 by Armin Ronacher.
-    :license: BSD, see LICENSE for more details.
-"""
 
 from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, _app_ctx_stack,jsonify
 import json
+import re
+import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(levelname)s:%(message)s')
+
 
 # configuration
 DEBUG = True
@@ -41,7 +35,9 @@ def jsfiles(name):
 
 @app.route('/_next',methods=['POST','GET'])
 def next():
-    return json.dumps(queue.next())
+    url = queue.next()
+    logging.info('Playing next song: '+url)
+    return json.dumps(url)
 
 @app.route('/_update',methods=['POST','GET'])
 def update():
@@ -50,22 +46,31 @@ def update():
 
 @app.route('/_clear-all',methods=['POST','GET'])
 def clear_all():
+    logging.info('Clearing queue')
     queue.clear()
     return 'Ok'
 
 @app.route('/_add_url',methods=['POST','GET'])
 def add_url():
     url = request.args.get('element',0,type=str)
-    queue.add(url)
-    print 'Python says: '+url
+    match = re.search('[h][t][t][p][:][/][/][w][w][w][\.][y][o][u][t][u][b][e][\.][c][o][m][/][w][a][t][c][h][\?][v][\=](.*)',url)
+    if match:
+        queue.add(url)
+        print 'Python says: '+url
+        logging.info('Added '+url)
+    else:
+        print 'Url invalida '+url
+        logging.info('Error! URL Invalid '+url)
     return str(len(queue.queue)+1)
 
 @app.route('/_rm_url',methods=['POST','GET'])
 def rm_url():
     url = request.args.get('element',0,type=str)
     print 'removendo '+str(url)
+    logging.info('Removing '+url)
     queue.rm(url)
     return 'Ok'
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')
+    #app.run(debug=False)
