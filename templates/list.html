@@ -1,0 +1,94 @@
+<!doctype HTML>
+<html>
+    <head>
+        <title>CodingTest To-do List</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}" type="text/css" />
+    </head>
+    <body>
+        <div id="container">
+            <h1>Community Song PlayList</h1>
+         {% if session.logged_in %}
+        <div id="player"></div>
+        {% endif %}
+		<br>
+		<input id="startPL" type=submit value=Start>
+		<input id="pausePL" type=submit value=Pause>
+                <input id="newSongUrl" type="text" />
+                <input id="addNewSong" type="submit" value="Adicionar na playlist"/>
+		<br>
+		<input id="upd" type=submit value="Atualizar">
+		<br>
+ 		<ul id="show-items"></ul>
+            <a href="#" id="clear-all">Clear All</a>
+        </div>
+        <script src="js/jquery-1.4.4.min.js"></script>
+        <script src="js/jquery-ui-1.8.7.custom.min.js"></script>
+        <script src="js/jquery.inlineedit.js"></script>
+        <script src="js/pubsub.js"></script>
+        <script src="js/base.js"></script>
+        <script>
+            //Load player api asynchronously.
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[5];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            var player;
+            function onYouTubeIframeAPIReady() {
+                player = new YT.Player('player', {
+                  height: '390',
+                  width: '640',
+                  videoId: 'JW5meKfy3fY',
+                  events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                  }
+                });
+            }
+            function checkValidUrl(url){
+                if(url == null){
+                    return 0;
+                }else{
+                    return 1;
+                }
+            }
+            $("#startPL").click(function(){
+                if(player.getPlayerState() == 2){
+                    player.playVideo();
+                }else{
+                    playNextVideo();
+                }
+            });
+
+            $("#pausePL").click(function(){
+                player.pauseVideo();
+            });
+            function playVideoByUrl(url){
+                player.loadVideoByUrl(url);
+            };
+           function playNextVideo(){
+                $.getJSON( SCRIPT_ROOT + '/_next',
+                        {},
+                        function(item){
+                            console.log("Recebi "+item);
+                                playVideoByUrl(item);
+                                update_function();
+                        })
+            };
+            function onPlayerReady(evt) {
+                console.log('playing '+playing)
+                //if(playing)
+                    evt.target.playVideo();
+            };
+            function onPlayerStateChange(evt) {
+                console.log('new state '+evt.data)
+                if (evt.data == 0) {
+                    playNextVideo();
+                }
+            };
+            function stopVideo() {
+                player.stopVideo();
+            };
+        </script>
+    </body>
+</html>
