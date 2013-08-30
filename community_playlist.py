@@ -48,6 +48,11 @@ def login():
         return render_template('list.html',queue=queue)
     return render_template('list.html',queue=queue)
 
+@app.route('/player',methods=['GET','POST'])
+def player():
+    global queue
+    return render_template('player.html',queue=queue)
+
 @app.route('/logout',methods=['GET','POST'])
 def logout():
     global BossOnHome
