@@ -65,14 +65,8 @@ def next():
     global queue
     global standardStartVideoId
 
-    url = queue.next()
-    if url is not None:
-        match = re.search('.*[w][a][t][c][h].[v][=]([^/]*)',url)
-        if match:
-            videoId = match.group(1)
-        else:
-            logging.info('Id não encontrada! '+url)
-            videoId = standardStartVideoId
+    videoId = queue.next()
+    if videoId is not None:
         logging.info('Playing next song: '+videoId)
         return json.dumps(videoId)
     else:
@@ -98,9 +92,9 @@ def add_url():
     global queue
 
     url = request.args.get('element',0,type=str)
-    match = re.search('[h][t][t][p][:][/][/][w][w][w][\.][y][o][u][t][u][b][e][\.][c][o][m][/][w][a][t][c][h][\?][v][\=](.*)',url)
+    match = re.search('.*[w][a][t][c][h].[v][=]([^/]*)',url)
     if match:
-        queue.add(url)
+        queue.add(match.group(1))
         print 'Python says: '+url
         logging.info('Added '+url)
     else:
@@ -122,6 +116,10 @@ def rm_url():
         logging.info(err)
         logging.info("Usuario sem permissões para remover item")
     return 'Ok'
+
+@app.route('/blablablaNewBoss',methods=['POST','GET'])
+def clear_boss():
+    return logout()
 
 if __name__ == '__main__':
     app.run(debug=DEBUG,host='0.0.0.0')

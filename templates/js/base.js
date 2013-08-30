@@ -6,21 +6,26 @@ var removeLink =$('#show-items li span a');
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
-                function(data){
+                function(items){
                     itemList.children().remove()
-                    console.log(data);
-                    for (item in data){
-                        console.log(data[item]);
-                        itemList.append(
-                                "<li class='video'>"
-                                + "<span class='editable'>"
-                                + data[item] 
-                                 + " </span><a href='#'>x</a></li>"
-                                );
-                    $.publish('/regenerate-list/', []);  
-                    }     
-                }
-            )
+                    console.log(items);
+                    for (item in items){
+                        console.log('Saca só: '+items[item]);
+                      $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+items[item]+'?v=2&alt=jsonc',
+                        function(data,status,xhr){
+                            localStorage.setItem(data.data.title,items[item])
+                            itemList.append(
+                                    "<li class='video'>"
+                                    + "<span class='editable'>"
+                                    + data.data.title
+                                     + " </span><a href='#'>x</a></li>"
+                                    );
+                            // data contains the JSON-Object below
+
+                    $.publish('/regenerate-list/', []); 
+                        });
+                    }} 
+                    );                
         };
 
 update_function();
@@ -40,7 +45,7 @@ var add_function = function(newItem){
         };
 var rm_function = function(item){
             $.getJSON( SCRIPT_ROOT+'/_rm_url',
-                {element:item},
+                {element:localStorage.getItem(item)},
                 function(n){
                     update_function()
                 }
@@ -100,4 +105,21 @@ itemList.delegate('li', 'mouseover mouseout', function(event) {
         $this.stop(true, true).fadeOut();
     }
 });
+
+  function youtubeFeedCallback(data) {
+    var s = '';
+    s += '<img src="' + data.entry.media$group.media$thumbnail[0].url + '" width="' + data.entry.media$group.media$thumbnail[0].width + '" height="' + data.entry.media$group.media$thumbnail[0].height + '" alt="' + data.entry.media$group.media$thumbnail[0].yt$name + '" align="right"/>';
+    s += '<b>Title:</b> ' + data.entry.title.$t + '<br/>';
+    s += '<b>Author:</b> ' + data.entry.author[0].name.$t + '<br/>';
+    s += '<b>Published:</b> ' + new Date(data.entry.published.$t).toLocaleDateString() + '<br/>';
+    s += '<b>Duration:</b> ' + Math.floor(data.entry.media$group.yt$duration.seconds / 60) + ':' + (data.entry.media$group.yt$duration.seconds % 60) + ' (' + data.entry.media$group.yt$duration.seconds + ' seconds)<br/>';
+    if (data.entry.gd$rating) {
+      s += '<b>Rating:</b> ' + data.entry.gd$rating.average.toFixed(1) + ' out of ' + data.entry.gd$rating.max + ' (' + data.entry.gd$rating.numRaters + ' ratings)<br/>';
+    }
+    s += '<b>Statistics:</b> ' + data.entry.yt$statistics.favoriteCount + ' favorite(s); ' + data.entry.yt$statistics.viewCount + ' view(s)<br/>';
+    s += '<br/>' + data.entry.media$group.media$description.$t.replace(/\n/g, '<br/>') + '<br/>';
+    s += '<br/><a href="' + data.entry.media$group.media$player.url + '" target="_blank">Watch on YouTube</a>';
+    document.write(s);
+  };
+
 
