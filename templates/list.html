@@ -10,13 +10,18 @@
             <span id="title">Community PlayList</span>
             <br>
          {% if session.logged_in %}
-         Você está logado!
-        {% endif %}
+         You are the boss!!!<br>
         <div id="player"></div>
-		<br>
-		<input id="startPL" type="submit" value=Start>
-		<input id="pausePL" type="submit" value=Pause>
+        <br>
+        <a href="/logout" id="logout">Logout</a>
+        <br>
+        <input id="startPL" type="submit" value=Start>
+        <input id="pausePL" type="submit" value=Pause>
         <input id="next" type="submit" value=">>">
+        {% else %}
+        <br>
+        <a href="/login" id="login">Login</a>
+        {% endif %}
 		<br>
         <input id="newSongUrl" type="text" />
         <input id="addNewSong" type="submit" value="Add"/>
@@ -24,7 +29,9 @@
 		<input id="upd" type="submit" value="Atualizar">
 		<br>
  		<ul id="show-items"></ul>
+         {% if session.logged_in %}
             <a href="#" id="clear-all">Clear All</a>
+        {% endif %}
         </div>
         <script src="js/jquery-1.4.4.min.js"></script>
         <script src="js/jquery-ui-1.8.7.custom.min.js"></script>
@@ -78,7 +85,10 @@
                         function(item){
                                 console.log("Proximo video "+item);
                             if(item != null){
-                                playVideoByUrl(item);
+                                player.loadVideoById(item);
+                                update_function();
+                            }else{
+                                player.loadVideoById('RFhNJ8ozDBk')
                                 update_function();
                             }
                         })
