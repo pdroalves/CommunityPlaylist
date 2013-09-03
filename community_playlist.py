@@ -14,6 +14,9 @@ DEBUG = False
 BossOnHome = 0
 BossKey = None
 queue = QueueManager()
+song_playing = None
+now_playing = False
+
 standardStartVideoId = 'dQw4w9WgXcQ'
 standardEndVideoId = 'EHk4B1MtQF8'
 SECRET_KEY = str(random.randrange(100000))
@@ -72,11 +75,35 @@ def next():
     else:
         return json.dumps(standardEndVideoId)
 
+@app.route('/_set_playing',methods=['GET'])
+def set_playing():
+    global now_playing
+    global song_playing
+
+    now_playing = request.args.get('now_playing',0,type=int)
+    song_playing = request.args.get('song_playing',0,type=str)
+
+    return 'Ok'
+
+@app.route('/_get_playing',methods=['GET'])
+def get_playing():
+    global now_playing
+    global song_playing
+
+    status = dict(
+            now_playing=now_playing,
+            song_playing=song_playing
+             )
+
+    return json.dumps(status)
+
+
 @app.route('/_update',methods=['POST','GET'])
 def update():
     global queue
 
-    print queue.getQueue()
+    if DEBUG:
+        print queue.getQueue()
     return json.dumps(queue.getQueue())
 
 @app.route('/_clear-all',methods=['POST','GET'])
@@ -109,7 +136,8 @@ def rm_url():
     try:
         if session['logged_in'] == True:
             url = request.args.get('element',0,type=str)
-            print 'removendo '+str(url)
+            if DEBUG:
+                print 'removendo '+str(url)
             logging.info('Removing '+url)
             queue.rm(url)
     except Exception,err:
@@ -123,4 +151,4 @@ def clear_boss():
 
 if __name__ == '__main__':
     app.run(debug=DEBUG,host='0.0.0.0')
-    #app.run(debug=False)
+    #app.run(debug=True)

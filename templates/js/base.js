@@ -3,16 +3,36 @@ var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 var itemList = $('#show-items');
 var removeLink =$('#show-items li span a');
 
+function periodic_updates(){    
+    update_function();
+    update_status_function();
+    setTimeout(periodic_updates,3000);
+};
+
+$(document).ready(function() {
+    periodic_updates();
+});
+
+var update_status_function = function(){
+    $.getJSON(SCRIPT_ROOT + '/_get_playing',
+        {},
+        function(status){
+            console.log(status.now_playing)
+            if(status.now_playing == 1){
+                document.getElementById('now_playing').innerHTML='Now playing: <b>'+status.song_playing+'</b>'
+            }else{
+                document.getElementById('now_playing').innerHTML='<b>Not playing...</b>'    
+            }
+        });
+};
+
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
                 function(items){
                     itemList.children().remove()
-                    console.log(items);
                     for (item in items){
-                        console.log('Saca só: '+items[item]);
-                      $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+items[item]+'?v=2&alt=jsonc',
-                        function(data,status,xhr){
+                        var callback_function = function(data,status,xhr){
                             localStorage.setItem(data.data.title,items[item])
                             itemList.append(
                                     "<li class='video'>"
@@ -23,12 +43,13 @@ var update_function = function(){
                             // data contains the JSON-Object below
 
                     $.publish('/regenerate-list/', []); 
-                        });
+                        };
+
+                        get_video_data(items[item],callback_function);
+                      
                     }} 
                     );                
         };
-
-update_function();
 
 var add_function = function(newItem){
             var len = 0
@@ -51,6 +72,11 @@ var rm_function = function(item){
                 }
             )            
         };
+
+var get_video_data = function(id,callback_function){
+    $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+id+'?v=2&alt=jsonc',
+        callback_function);
+}
 
 $("#upd").click(function(){
             console.log('update');
@@ -93,7 +119,6 @@ $("#clear-all").click(function(){
                     update_function()    
                 );
 });
-
 
 // Fade In and Fade Out the Remove link on hover
 itemList.delegate('li', 'mouseover mouseout', function(event) {
