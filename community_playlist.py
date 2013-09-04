@@ -139,7 +139,7 @@ def add_url():
     global queue
 
     url = request.args.get('element',0,type=str)
-    match = re.search('.*[w][a][t][c][h].[v][=]([^/]*)',url)
+    match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
     if match:
         queue.add(match.group(1))
         print 'Python says: '+url

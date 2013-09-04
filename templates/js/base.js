@@ -26,25 +26,11 @@ var update_status_function = function(){
         });
 };
 
-function compare(o1, o2){
- var arr = [];
- $(o1).each(function(i1){        
-     var match = false;
-     $(o2).each(function(i2){            
-         if ( $("o1:eq("+i1+")").html() == $("o2:eq("+i2+")").html() )
-             match = true;
-     });
-     if ( !match )
-         arr.push($("o1:eq("+i1+")")[0]);        
- });
- return arr;
-}
-
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
                 function(items){
-                    var videos = document.getElementsByClassName('video');
+                    var videos = document.getElementsByClassName('videoitem');
 
                     Array.prototype.forEach.call(videos, function(video) {
                         if(items.indexOf(video.getAttribute('id')) == -1){
@@ -54,30 +40,27 @@ var update_function = function(){
                     }); 
 
                     for (item in items){
-                        var url_item = "<li class='video' id='"+items[item]+"'>"
-                                    +"<span class='editable'>"+
+                        var url_item = "<li class='video'>"
+                                    +"<span class='videoitem' id='"+items[item]+"'>"+
                                     + items[item]+
-                                     "</span><a href='#'>x</a></li>";
+                                     "</span><a href='#'> x</a></li>";
 
                         if(document.getElementById(items[item]) == null){
                             itemList.append(
                                         url_item
                                         );
-                            console.log('updated!');
                         
 
                             var callback_function = function(data,status,xhr){
                                 if(document.getElementById(items[item]) != null){
-                                    document.getElementById(items[item]).textContent = data.data.title
+                                    document.getElementById(items[item]).innerHTML = data.data.title
                                 }
                                 $.publish('/regenerate-list/', []); 
                             };
 
 
                             get_video_data(items[item],callback_function);
-                            
-                        }else{
-                            console.log('bundalele')
+
                         }
                     }
                 } 
@@ -137,8 +120,7 @@ $("#addNewSong").click(function(){
 
 // Remove todo
 itemList.delegate("a", "click", function(e) {
-    var $this = $(this);
- 
+    var $this = $(this); 
     remove_item($this);
 });
 
