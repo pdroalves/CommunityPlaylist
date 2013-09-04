@@ -17,7 +17,7 @@ var update_status_function = function(){
     $.getJSON(SCRIPT_ROOT + '/_get_playing',
         {},
         function(status){
-            console.log(status.now_playing)
+            //console.log(status.now_playing)
             if(status.now_playing == 1){
                 document.getElementById('now_playing').innerHTML='Now playing: <b>'+status.song_playing+'</b>'
             }else{
@@ -26,29 +26,62 @@ var update_status_function = function(){
         });
 };
 
+function compare(o1, o2){
+ var arr = [];
+ $(o1).each(function(i1){        
+     var match = false;
+     $(o2).each(function(i2){            
+         if ( $("o1:eq("+i1+")").html() == $("o2:eq("+i2+")").html() )
+             match = true;
+     });
+     if ( !match )
+         arr.push($("o1:eq("+i1+")")[0]);        
+ });
+ return arr;
+}
+
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
                 function(items){
-                    itemList.children().remove()
+                    var videos = document.getElementsByClassName('video');
+
+                    Array.prototype.forEach.call(videos, function(video) {
+                        if(items.indexOf(video.getAttribute('id')) == -1){
+                            console.log("removing "+video.innerText)
+                            video.remove();
+                        }
+                    }); 
+
                     for (item in items){
-                        var callback_function = function(data,status,xhr){
-                            localStorage.setItem(data.data.title,items[item])
+                        var url_item = "<li class='video' id='"+items[item]+"'>"
+                                    +"<span class='editable'>"+
+                                    + items[item]+
+                                     "</span><a href='#'>x</a></li>";
+
+                        if(document.getElementById(items[item]) == null){
                             itemList.append(
-                                    "<li class='video'>"
-                                    + "<span class='editable'>"
-                                    + data.data.title
-                                     + " </span><a href='#'>x</a></li>"
-                                    );
-                            // data contains the JSON-Object below
+                                        url_item
+                                        );
+                            console.log('updated!');
+                        
 
-                    $.publish('/regenerate-list/', []); 
-                        };
+                            var callback_function = function(data,status,xhr){
+                                if(document.getElementById(items[item]) != null){
+                                    document.getElementById(items[item]).textContent = data.data.title
+                                }
+                                $.publish('/regenerate-list/', []); 
+                            };
 
-                        get_video_data(items[item],callback_function);
-                      
-                    }} 
-                    );                
+
+                            get_video_data(items[item],callback_function);
+                            
+                        }else{
+                            console.log('bundalele')
+                        }
+                    }
+                } 
+            );                
         };
 
 var add_function = function(newItem){
@@ -120,16 +153,7 @@ $("#clear-all").click(function(){
                 );
 });
 
-// Fade In and Fade Out the Remove link on hover
-itemList.delegate('li', 'mouseover mouseout', function(event) {
-    var $this = $(this).find('a');
-    
-    if(event.type === 'mouseover') {
-        $this.stop(true, true).fadeIn();
-    } else {
-        $this.stop(true, true).fadeOut();
-    }
-});
+
 
   function youtubeFeedCallback(data) {
     var s = '';
