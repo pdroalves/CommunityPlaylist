@@ -50,6 +50,7 @@
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
             var player;
             var default_start_video = 'dQw4w9WgXcQ'
+            var default_next_video = 'RFhNJ8ozDBk'
             var song_playing = default_start_video
 
             function onYouTubeIframeAPIReady() {
@@ -91,15 +92,15 @@
                 $.getJSON( SCRIPT_ROOT + '/_next',
                         {},
                         function(item){
-                                console.log("Proximo video "+item);
+                            console.log("Proximo video "+item);
                             if(item != null){
                                 song_playing = item;
-                                player.loadVideoById(item);
-                                update_function();
                             }else{
-                                player.loadVideoById('RFhNJ8ozDBk')
-                                update_function();
+                                song_playing = default_next_video
                             }
+                                player.loadVideoById(song_playing)
+                                update_status_function();
+                                update_function();
                         })
             };
             function onPlayerReady(evt) {
