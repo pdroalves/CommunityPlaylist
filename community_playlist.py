@@ -38,7 +38,7 @@ song_playing = None
 now_playing = False
 
 standardStartVideoId = 'dQw4w9WgXcQ'
-standardEndVideoId = 'EHk4B1MtQF8'
+standardEndVideoId = 'F0BfcdPKw8E'
 SECRET_KEY = str(random.randrange(100000))
 
 # create our little application :)
@@ -68,19 +68,24 @@ def login():
         session['logged_in'] = True
         logging.info("Usuario logado")
         flash('You were logged in')
-        return render_template('list.html',queue=queue)
+        #return render_template('list.html',queue=queue,key=SECRET_KEY)
     return render_template('list.html',queue=queue)
 
 @app.route('/logout',methods=['GET','POST'])
 def logout():
     global BossOnHome
     global queue
+    global now_playing
+    global SECRET_KEY
 
-    if BossOnHome == 1:
-        BossOnHome = 0
-        session.pop('logged_in',None)
-        logging.info('Usuario deslogado')
-        return render_template('list.html',queue=queue) 
+    #print request
+    #key = request.args.get('key',0,type=str)
+    #if session['logged_in']:
+    BossOnHome = 0
+    now_playing = 0
+    session.pop('logged_in',None)
+    logging.info('Usuario deslogado')
+    #SECRET_KEY = str(random.randrange(100000))
     return render_template('list.html',queue=queue)
 
 @app.route('/_next',methods=['POST','GET'])
@@ -170,5 +175,5 @@ def clear_boss():
     return logout()
 
 if __name__ == '__main__':
-    app.run(debug=DEBUG,host='0.0.0.0')
-    #app.run(debug=True)
+    #app.run(debug=DEBUG,host='0.0.0.0')
+    app.run(debug=True)

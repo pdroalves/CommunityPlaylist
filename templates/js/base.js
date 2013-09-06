@@ -17,6 +17,7 @@ var update_status_function = function(){
     $.getJSON(SCRIPT_ROOT + '/_get_playing',
         {},
         function(status){
+            console.log(status.now_playing)
             if(status.now_playing == 1){
                 document.getElementById('now_playing').innerHTML='Now playing: <b>'+status.song_playing+'</b>'
             }else{
@@ -111,6 +112,15 @@ var get_video_data = function(id,calllback_function){
     }
 }
 
+$("#login").click(function(){
+  $.getJSON( SCRIPT_ROOT+'/login',
+                {},
+                function(n){
+                    localStorage.put('key',request.get('key'))
+                }
+            )   
+});
+
 $("#upd").click(function(){
             console.log('update');
             update_function();
@@ -137,6 +147,7 @@ $("#addNewSong").click(function(){
 
 // Remove todo
 itemList.delegate("a", "click", function(e) {
+    $(this).stop(true, true).fadeOut()
     rm_function($(this).parent().children()[0].getAttribute('id'));
 });
 
