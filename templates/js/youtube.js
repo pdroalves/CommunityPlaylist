@@ -18,6 +18,7 @@
                     'onStateChange': onPlayerStateChange
                   }
                 });
+                ;
             }
             function checkValidUrl(url){
                 if(url == null){

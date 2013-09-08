@@ -28,17 +28,21 @@ import json
 import re
 import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(levelname)s:%(message)s')
 import random
+from time import time
+import string
 
 # configuration
 DEBUG = True
 BossOnHome = 0
-BossKey = None
+LastBossCall = 0
+MaxCallInterval = 21
 song_playing = None
 now_playing = False
 
 standardStartVideoId = 'dQw4w9WgXcQ'
 standardEndVideoId = 'F0BfcdPKw8E'
-SECRET_KEY = str(random.randrange(100000))
+SECRET_KEY = 'NoKey'
+KEY_SIZE = 100
 
 # create our little application :)
 app = Flask(__name__)
@@ -46,10 +50,12 @@ app.config.from_object(__name__)
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 queue = QueueManager()
 
+def gen_random_key():
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(KEY_SIZE))
 
 def redefinir_key():
     global SECRET_KEY
-    SECRET_KEY = str(random.randrange(100000))
+    SECRET_KEY = gen_random_key()
 
 def check_key(key):
     global SECRET_KEY
@@ -57,6 +63,27 @@ def check_key(key):
         return True
     else:
         return False
+
+@app.route('/bosscall')
+def boss_call():
+    global LastBossCall
+    try:
+        if check_key(session['key']):
+            LastBossCall = time()
+            logging.critical("Boss just called")
+    except Exception,err:
+        pass
+    return 'Ok'
+
+def boss_auditing():
+    global LastBossCall
+    global MaxCallInterval
+    global BossOnHome
+
+    if time() - LastBossCall > MaxCallInterval and BossOnHome == 1:
+        BossOnHome = 0
+        redefinir_key()
+        logging.critical('Boss left the room')
 
 @app.route('/')
 def show_entries():
@@ -75,16 +102,23 @@ def login():
     global queue
     global SECRET_KEY
 
+    boss_auditing()
     print 'BossOnHome: '+ str(BossOnHome)
+
     try:
         if BossOnHome == 0:
             BossOnHome = 1
+            redefinir_key()
             session['key'] = SECRET_KEY
-            logging.critical("Usuario logado")
+            boss_call()
+            logging.critical("Usuario logado "+session['key'])
+        else:
+            logging.critical(session['key'])            
     except Exception,err:
-        print "Erro ao deslogar"
+        print "Erro ao logar"
         logging.critical("Erro ao logar: "+str(err))
-    return render_template('list.html',queue=queue)
+        session.pop('key',None)
+    return render_template('list.html')
 
 @app.route('/logout',methods=['GET','POST'])
 def logout():
@@ -97,22 +131,24 @@ def logout():
             BossOnHome = 0
             now_playing = 0
             session.pop('key',None)
-            redefinir_key()
+            SECRET_KEY = 'NoKey'
             logging.critical('Usuario deslogado')
-        else:
-            print "Erro! Key invalida"
     except Exception,err:
         print "Erro ao deslogar"
         logging.critical("Erro ao deslogar: "+str(err))
-    return render_template('list.html',queue=queue)
+        session.pop('key',None)
+    print BossOnHome
+    return render_template('list.html')
 
 @app.route('/_next',methods=['POST','GET'])
 def next():
     global queue
     global standardStartVideoId
+
+    boss_auditing()
+
     try:
         if check_key(session['key']):
-            print session['key']
             videoId = queue.next()
             if videoId is not None:
                 logging.critical('Playing next song: '+videoId)
@@ -124,6 +160,8 @@ def next():
     except Exception,err:
         logging.critical(err)
         logging.critical("Usuario sem permissões para tocar videos")
+        session.pop('key',None)
+        return render_template('list.html')
     return 'Ok'
 
 @app.route('/_set_playing',methods=['GET'])
@@ -131,9 +169,10 @@ def set_playing():
     global now_playing
     global song_playing
 
+    boss_auditing()
+
     try:
         if check_key(session['key']):
-            print session['key']
             now_playing = request.args.get('now_playing',0,type=int)
             song_playing = request.args.get('song_playing',0,type=str)
 
@@ -143,6 +182,8 @@ def set_playing():
     except Exception,err:
         logging.critical(err)
         logging.critical("Usuario sem permissões para setar o now playing")
+        session.pop('key',None)
+        return render_template('list.html')
     return 'Ok'
 
 @app.route('/_get_playing',methods=['GET'])
@@ -162,13 +203,13 @@ def get_playing():
 def update():
     global queue
 
-   # if DEBUG:
-       # print queue.getQueue()
     return json.dumps(queue.getQueue())
 
 @app.route('/_clear-all',methods=['POST','GET'])
 def clear_all():
     global queue
+
+    boss_auditing()
 
     try:
         if check_key(session['key']):
@@ -179,6 +220,8 @@ def clear_all():
     except Exception,err:
         logging.critical(err)
         logging.critical("Usuario sem permissões limpar a playlist")
+        session.pop('key',None)
+        return render_template('list.html')
     return 'Ok'
 
 @app.route('/_add_url',methods=['POST','GET'])
@@ -211,6 +254,8 @@ def rm_url():
     except Exception,err:
         logging.critical(err)
         logging.critical("Usuario sem permissões para remover item")
+        session.pop('key',None)
+        return render_template('list.html')
     return 'Ok'
 
 @app.route('/blablablaNewBoss',methods=['POST','GET'])

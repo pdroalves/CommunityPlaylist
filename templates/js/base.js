@@ -11,7 +11,18 @@ function periodic_updates(){
 
 $(document).ready(function() {
     periodic_updates();
+    setTimeout(periodic_updates,1000);
 });
+
+function alive_sign(){
+    if(document.getElementById('player') != null){
+        console.log('Saying hello')
+        $.getJSON(SCRIPT_ROOT + '/bosscall',null,null)
+    }
+    setTimeout(alive_sign,10000);
+}
+
+alive_sign();
 
 var update_status_function = function(){
     $.getJSON(SCRIPT_ROOT + '/_get_playing',
