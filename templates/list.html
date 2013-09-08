@@ -10,7 +10,7 @@
             <span id="title">Community PlayList</span>
             <br>      
 
-         {% if session.logged_in %}
+         {% if session.key %}
          You are the boss!!!<br>
         <div id="player"></div>
         <br>
@@ -34,7 +34,7 @@
 		//-->
         <br>
  		<ul id="show-items"></ul>
-         {% if session.logged_in %}
+          {% if session.key %}}
             <a href="#" id="clear-all">Clear All</a>
         {% endif %}
         </div>

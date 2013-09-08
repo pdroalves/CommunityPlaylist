@@ -47,6 +47,17 @@ app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 queue = QueueManager()
 
 
+def redefinir_key():
+    global SECRET_KEY
+    SECRET_KEY = str(random.randrange(100000))
+
+def check_key(key):
+    global SECRET_KEY
+    if key == SECRET_KEY:
+        return True
+    else:
+        return False
+
 @app.route('/')
 def show_entries():
     global queue
@@ -62,13 +73,17 @@ def jsfiles(name):
 def login():
     global BossOnHome
     global queue
+    global SECRET_KEY
 
     print 'BossOnHome: '+ str(BossOnHome)
-    if BossOnHome == 0:
-        BossOnHome = 1
-        session['logged_in'] = True
-        logging.info("Usuario logado")
-        #return render_template('list.html',queue=queue,key=SECRET_KEY)
+    try:
+        if BossOnHome == 0:
+            BossOnHome = 1
+            session['key'] = SECRET_KEY
+            logging.critical("Usuario logado")
+    except Exception,err:
+        print "Erro ao deslogar"
+        logging.critical("Erro ao logar: "+str(err))
     return render_template('list.html',queue=queue)
 
 @app.route('/logout',methods=['GET','POST'])
@@ -76,16 +91,19 @@ def logout():
     global BossOnHome
     global queue
     global now_playing
-    global SECRET_KEY
 
-    #print request
-    #key = request.args.get('key',0,type=str)
-    #if session['logged_in']:
-    BossOnHome = 0
-    now_playing = 0
-    session.pop('logged_in',None)
-    logging.info('Usuario deslogado')
-    #SECRET_KEY = str(random.randrange(100000))
+    try:
+        if check_key(session['key']):
+            BossOnHome = 0
+            now_playing = 0
+            session.pop('key',None)
+            redefinir_key()
+            logging.critical('Usuario deslogado')
+        else:
+            print "Erro! Key invalida"
+    except Exception,err:
+        print "Erro ao deslogar"
+        logging.critical("Erro ao deslogar: "+str(err))
     return render_template('list.html',queue=queue)
 
 @app.route('/_next',methods=['POST','GET'])
@@ -93,16 +111,19 @@ def next():
     global queue
     global standardStartVideoId
     try:
-        if session['logged_in'] == True:
+        if check_key(session['key']):
+            print session['key']
             videoId = queue.next()
             if videoId is not None:
-                logging.info('Playing next song: '+videoId)
+                logging.critical('Playing next song: '+videoId)
                 return json.dumps(videoId)
             else:
                 return json.dumps(standardEndVideoId)
+        else:
+            return logout()
     except Exception,err:
-        logging.info(err)
-        logging.info("Usuario sem permissões para tocar videos")
+        logging.critical(err)
+        logging.critical("Usuario sem permissões para tocar videos")
     return 'Ok'
 
 @app.route('/_set_playing',methods=['GET'])
@@ -110,9 +131,18 @@ def set_playing():
     global now_playing
     global song_playing
 
-    now_playing = request.args.get('now_playing',0,type=int)
-    song_playing = request.args.get('song_playing',0,type=str)
+    try:
+        if check_key(session['key']):
+            print session['key']
+            now_playing = request.args.get('now_playing',0,type=int)
+            song_playing = request.args.get('song_playing',0,type=str)
 
+            logging.critical('Set Playing: '+str(song_playing)+" - "+str(now_playing))
+        else:
+            return logout()
+    except Exception,err:
+        logging.critical(err)
+        logging.critical("Usuario sem permissões para setar o now playing")
     return 'Ok'
 
 @app.route('/_get_playing',methods=['GET'])
@@ -140,8 +170,15 @@ def update():
 def clear_all():
     global queue
 
-    logging.info('Clearing queue')
-    queue.clear()
+    try:
+        if check_key(session['key']):
+            logging.critical('Clearing queue')
+            queue.clear()
+        else:
+            return logout()
+    except Exception,err:
+        logging.critical(err)
+        logging.critical("Usuario sem permissões limpar a playlist")
     return 'Ok'
 
 @app.route('/_add_url',methods=['POST','GET'])
@@ -153,30 +190,32 @@ def add_url():
     if match:
         queue.add(match.group(1))
         print 'Python says: '+url
-        logging.info('Added '+url)
+        logging.critical('Added '+url)
     else:
         print 'Url invalida '+url
-        logging.info('Error! URL Invalid '+url)
+        logging.critical('Error! URL Invalid '+url)
     return str(len(queue.queue)+1)
 
 @app.route('/_rm_url',methods=['POST','GET'])
 def rm_url():
     global queue
-
     try:
-        if session['logged_in'] == True:
+        if check_key(session['key']):
             url = request.args.get('element',0,type=str)
             if DEBUG:
                 print 'removendo '+str(url)
-            logging.info('Removing '+url)
+            logging.critical('Removing '+url)
             queue.rm(url)
+        else:
+            return logout()
     except Exception,err:
-        logging.info(err)
-        logging.info("Usuario sem permissões para remover item")
+        logging.critical(err)
+        logging.critical("Usuario sem permissões para remover item")
     return 'Ok'
 
 @app.route('/blablablaNewBoss',methods=['POST','GET'])
 def clear_boss():
+    logging.critical('Clearing ownership')
     return logout()
 
 if __name__ == '__main__':
