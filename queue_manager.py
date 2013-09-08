@@ -75,7 +75,13 @@ class QueueManager:
 
 	def rm(self,url):
 		cursor = self.get_db().cursor()
-		if [element for element in self.queue if element['url'] == url]:
+		element = None
+		for item in self.queue:
+			if item.get('url') == url:
+				element = item
+				break
+
+		if element is not None:
 			print element
 			self.queue.remove(element)
 			cursor.execute('UPDATE playlist SET removed = 1 WHERE id = \''+str(element.get("id"))+'\'')
@@ -121,7 +127,8 @@ class QueueManager:
 
 	def clear(self):
 		cursor = self.get_db().cursor()
-		for element in self.queue:
-			print 'Clear: '+str(element)
-			self.rm(element.get('url'))
+		while len(self.queue) > 0:
+			for element in self.queue:
+				print 'Clear: '+str(element)
+				self.rm(element.get('url'))
 		return

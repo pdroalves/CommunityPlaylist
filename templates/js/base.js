@@ -26,10 +26,16 @@ var update_status_function = function(){
         });
 };
 
-var get_video_container = function(id,txt){
+var get_video_container = function(id,t){
+    var txt = "Carregando...";
+
+    if(id != t){
+        txt = t
+    }
+
     return "<li class='video' id='"+id+"'>"
-        +"<span class='videoitem'>"+
-        + txt+
+        +"<span class='videoitem'>"
+        +txt+
          "</span><a href=\"#\"> x</a></li>";
 };
 
@@ -61,8 +67,7 @@ var update_function = function(){
 
                     // Adiciona novos itens
                     for (item in items){                    
-                        var url_item = get_video_container(items[item],items[item]);                       
-
+                        var url_item = get_video_container(items[item],items[item]);
                         if(document.getElementById(items[item]) == null){
                             itemList.append(
                                 url_item                                       
@@ -105,6 +110,7 @@ var get_video_data = function(id,calllback_function){
              function(data,status,xhr){
                     if(document.getElementById(id) != null && data.data.title != 'NaN'){
                         document.getElementById(id).children[0].innerHTML = data.data.title;
+                        //document.getElementById(id).children[0].innerHTML = id;
                     }
                 }
             );
@@ -148,7 +154,7 @@ $("#addNewSong").click(function(){
 
 // Remove todo
 itemList.delegate("a", "click", function(e) {
-    $(this).stop(true, true).fadeOut()
+    //$(this).stop(true, true).fadeOut()
     rm_function($(this).parent().attr('id'));
 });
 
