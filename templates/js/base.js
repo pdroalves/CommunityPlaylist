@@ -17,20 +17,20 @@ var update_status_function = function(){
     $.getJSON(SCRIPT_ROOT + '/_get_playing',
         {},
         function(status){
-            console.log(status.now_playing)
+            //console.log(status.now_playing)
             if(status.now_playing == 1){
-                document.getElementById('now_playing').innerHTML='Now playing: <b>'+status.song_playing+'</b>'
+                $("span.now_playing").html('Now playing: <b>'+status.song_playing+'</b>')
             }else{
-                document.getElementById('now_playing').innerHTML='<b>Not playing...</b>'    
+                $("span.now_playing").html('<b>Not playing...</b>')
             }
         });
 };
 
 var get_video_container = function(id,txt){
-    return "<li class='video' >"
-        +"<span class='videoitem' id='"+id+"'>"+
+    return "<li class='video' id='"+id+"'>"
+        +"<span class='videoitem'>"+
         + txt+
-         "</span><a href='#' > x</a></li>";
+         "</span><a href=\"#\"> x</a></li>";
 };
 
 var update_function = function(){
@@ -41,23 +41,23 @@ var update_function = function(){
 
                     // Percorre a lista e verifica se algum item foi removido
                     Array.prototype.forEach.call(videos, function(video) {
-                        if(items.indexOf(video.getAttribute('id')) == -1){
+                        if(items.indexOf(video.parentNode.getAttribute('id')) == -1){
                             console.log("removing "+video.innerText)
-                            document.getElementById(video.getAttribute('id')).parentNode.remove();
+                            document.getElementById(video.parentNode.getAttribute('id')).remove();
                         }
                     }); 
 
-                    var count = 0;
+                    /*var count = 0;
 
                     // Verifica se o indice dos videos está correto
                     Array.prototype.forEach.call(videos, function(video) {
-                      if(items.indexOf(video.getAttribute('id')) != count){
-                            console.log("Corrigindo indice "+video.getAttribute('id'))
-                            video.innerText = video.getAttribute('id');
-                            get_video_data(video.getAttribute('id'));
+                      if(items.indexOf(video.parentNode.getAttribute('id')) != count){
+                            console.log("Corrigindo indice "+video.parentNode.getAttribute('id'))
+                            video.innerText = video.parentNode.getAttribute('id');
+                            get_video_data(video.parentNode.getAttribute('id'));
                         }
                         count++;
-                    }); 
+                    }); */
 
                     // Adiciona novos itens
                     for (item in items){                    
@@ -65,8 +65,9 @@ var update_function = function(){
 
                         if(document.getElementById(items[item]) == null){
                             itemList.append(
-                                        url_item
+                                url_item                                       
                                         );
+                            $("li[id=\'"+items[item]+"\']").fadeIn()
                         }
                         get_video_data(items[item]);
                     }
@@ -103,7 +104,7 @@ var get_video_data = function(id,calllback_function){
            // Método que atualiza o nome do vídeo na lista
              function(data,status,xhr){
                     if(document.getElementById(id) != null && data.data.title != 'NaN'){
-                        document.getElementById(id).innerHTML = data.data.title;
+                        document.getElementById(id).children[0].innerHTML = data.data.title;
                     }
                 }
             );
@@ -148,7 +149,7 @@ $("#addNewSong").click(function(){
 // Remove todo
 itemList.delegate("a", "click", function(e) {
     $(this).stop(true, true).fadeOut()
-    rm_function($(this).parent().children()[0].getAttribute('id'));
+    rm_function($(this).parent().attr('id'));
 });
 
 $("#clear-all").click(function(){

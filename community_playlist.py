@@ -30,10 +30,9 @@ import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, fo
 import random
 
 # configuration
-DEBUG = False
+DEBUG = True
 BossOnHome = 0
 BossKey = None
-queue = QueueManager()
 song_playing = None
 now_playing = False
 
@@ -45,6 +44,8 @@ SECRET_KEY = str(random.randrange(100000))
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+queue = QueueManager()
+
 
 @app.route('/')
 def show_entries():
@@ -67,7 +68,6 @@ def login():
         BossOnHome = 1
         session['logged_in'] = True
         logging.info("Usuario logado")
-        flash('You were logged in')
         #return render_template('list.html',queue=queue,key=SECRET_KEY)
     return render_template('list.html',queue=queue)
 
@@ -92,13 +92,18 @@ def logout():
 def next():
     global queue
     global standardStartVideoId
-
-    videoId = queue.next()
-    if videoId is not None:
-        logging.info('Playing next song: '+videoId)
-        return json.dumps(videoId)
-    else:
-        return json.dumps(standardEndVideoId)
+    try:
+        if session['logged_in'] == True:
+            videoId = queue.next()
+            if videoId is not None:
+                logging.info('Playing next song: '+videoId)
+                return json.dumps(videoId)
+            else:
+                return json.dumps(standardEndVideoId)
+    except Exception,err:
+        logging.info(err)
+        logging.info("Usuario sem permissões para tocar videos")
+    return 'Ok'
 
 @app.route('/_set_playing',methods=['GET'])
 def set_playing():
@@ -127,8 +132,8 @@ def get_playing():
 def update():
     global queue
 
-    if DEBUG:
-        print queue.getQueue()
+   # if DEBUG:
+       # print queue.getQueue()
     return json.dumps(queue.getQueue())
 
 @app.route('/_clear-all',methods=['POST','GET'])
@@ -175,5 +180,5 @@ def clear_boss():
     return logout()
 
 if __name__ == '__main__':
-    #app.run(debug=DEBUG,host='0.0.0.0')
-    app.run(debug=True)
+	app.run(debug=DEBUG,host='0.0.0.0')
+	#app.run(debug=True)

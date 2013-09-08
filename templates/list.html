@@ -8,7 +8,8 @@
     <body>
         <div id="container">
             <span id="title">Community PlayList</span>
-            <br>
+            <br>      
+
          {% if session.logged_in %}
          You are the boss!!!<br>
         <div id="player"></div>
@@ -23,7 +24,7 @@
         <a href="/login" id="login">Login</a>
         {% endif %}
 		<br>
-        <span id="now_playing"></span>
+        <span class="now_playing" id="empty"></span>
         <br>
         <input id="newSongUrl" type="text" />
         <input id="addNewSong" type="submit" value="Add"/>
@@ -37,7 +38,7 @@
             <a href="#" id="clear-all">Clear All</a>
         {% endif %}
         </div>
-        <script src="js/jquery-1.4.4.min.js"></script>
+        <script src="js/jquery-1.10.2.min.js"></script>
         <script src="js/jquery-ui-1.8.7.custom.min.js"></script>
         <script src="js/jquery.inlineedit.js"></script>
         <script src="js/pubsub.js"></script>
