@@ -117,7 +117,7 @@ def login():
         else:
             logging.critical(session['key'])            
     except Exception,err:
-        print "Erro ao logar"
+        print "Erro ao logar" + str(err)
         logging.critical("Erro ao logar: "+str(err))
         session.pop('key',None)
     return render_template('list.html')
@@ -136,14 +136,15 @@ def logout():
         if check_key(session['key']):
             BossOnHome = 0
             now_playing = 0
-            session.pop('key',None)
             SECRET_KEY = 'NoKey'
             logging.critical('Usuario deslogado')
     except Exception,err:
         print "Erro ao deslogar"
         logging.critical("Erro ao deslogar: "+str(err))
+    finally:
         session.pop('key',None)
-    print BossOnHome
+
+    print 'BossOnHome: '+ str(BossOnHome)
     return render_template('list.html')
 
 @app.route('/_next',methods=['POST','GET'])
@@ -278,5 +279,6 @@ def clear_boss():
     return logout()
 
 if __name__ == '__main__':
+    print "Starting Community Playlist"
 	app.run(debug=DEBUG,host='0.0.0.0')
 	#app.run(debug=True)
