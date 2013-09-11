@@ -7,6 +7,9 @@
             var default_start_video = 'dQw4w9WgXcQ'
             var default_next_video = 'F0BfcdPKw8E'
             var song_playing = default_start_video
+            var song_title = ""
+            var status = 0
+            var current_time = 0
 
             function onYouTubeIframeAPIReady() {
                 player = new YT.Player('player', {
@@ -65,15 +68,26 @@
                     evt.target.playVideo();
             };
 
-            function updateStatus(song_title,status){
+            function updateStatus(){
                 $.getJSON( SCRIPT_ROOT + '/_set_playing',
                     {'now_playing':status,
-                     'song_playing':song_title},
+                      'song_id':song_playing,
+                     'song_playing':song_title,
+                      'current_time':player.getCurrentTime()},
                      function(){
-
                      }
                     );
             }
+
+
+            function periodicStatusUpdate(){
+                if(document.getElementById('player') != null){
+                    updateStatus();
+                }
+                setTimeout(periodicStatusUpdate,1000);
+            }
+
+            periodicStatusUpdate();
 
             function onPlayerStateChange(evt) {
                 console.log('new state '+evt.data)
@@ -81,14 +95,18 @@
                 if(evt.data == YT.PlayerState.PLAYING){
                     get_video_data(song_playing,
                         function(data,status,xhr){
-                            updateStatus(data.data.title,1);
+                            //updateStatus(data.data.title,1);
+                            song_title = data.data.title;
+                            status = 1;
                     });
                 }else if (evt.data == YT.PlayerState.ENDED) {
                     playNextVideo();
                 }else{
                     get_video_data(song_playing,
                         function(data,status,xhr){
-                            updateStatus(data.data.title,0);
+                            //updateStatus(data.data.title,1);
+                            song_title = data.data.title;
+                            status = 0;
                     });
                 }
             };

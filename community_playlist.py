@@ -38,6 +38,8 @@ LastBossCall = 0
 MaxCallInterval = 21
 song_playing = None
 now_playing = False
+current_time = 0
+song_id = ''
 
 standardStartVideoId = 'dQw4w9WgXcQ'
 standardEndVideoId = 'F0BfcdPKw8E'
@@ -120,6 +122,10 @@ def login():
         session.pop('key',None)
     return render_template('list.html')
 
+@app.route('/player',methods=['GET','POST'])
+def player():
+    return render_template('player.html')
+
 @app.route('/logout',methods=['GET','POST'])
 def logout():
     global BossOnHome
@@ -168,6 +174,8 @@ def next():
 def set_playing():
     global now_playing
     global song_playing
+    global current_time
+    global song_id
 
     boss_auditing()
 
@@ -175,8 +183,10 @@ def set_playing():
         if check_key(session['key']):
             now_playing = request.args.get('now_playing',0,type=int)
             song_playing = request.args.get('song_playing',0,type=str)
+            current_time = request.args.get('current_time',0,type=int)
+            song_id = request.args.get('song_id',0,type=str)
 
-            logging.critical('Set Playing: '+str(song_playing)+" - "+str(now_playing))
+            logging.critical('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
         else:
             return logout()
     except Exception,err:
@@ -190,10 +200,14 @@ def set_playing():
 def get_playing():
     global now_playing
     global song_playing
+    global current_time
+    global song_id
 
     status = dict(
             now_playing=now_playing,
-            song_playing=song_playing
+            song_id=song_id,
+            song_playing=song_playing,
+            current_time=current_time
              )
 
     return json.dumps(status)
