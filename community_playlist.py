@@ -209,7 +209,6 @@ def get_playing():
             song_playing=song_playing,
             current_time=current_time
              )
-    print status
     return json.dumps(status)
 
 

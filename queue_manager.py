@@ -36,7 +36,6 @@ class QueueManager:
 		top = _app_ctx_stack.top
 		db_file = self.db_file
 		if db is None:
-			print 'Criando'
 			sqlite_db = sqlite3.connect(db_file)
 			cursor = sqlite_db.cursor()
 
