@@ -1,54 +1,73 @@
 //Load player api asynchronously.
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[5];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-            var player;
-            var default_start_video = 'dQw4w9WgXcQ'
-            var default_next_video = 'F0BfcdPKw8E'
-            var song_playing = default_start_video
-            var current_time = 0
-            var maxDelay = 10
+var tag = document.createElement('script');
+
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+var player;
+var default_start_video = 'dQw4w9WgXcQ'
+var default_next_video = 'F0BfcdPKw8E'
+var song_playing = default_start_video
+var current_time = 0
+var maxDelay = 5.0
 
 
-            function onYouTubeIframeAPIReady() {
-                player = new YT.Player('player', {
-                  height: '100%',
-                  width: '100%',
-                  videoId: default_start_video,
-                  events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
-                  }
-                });
-                ;
-            }
-            var update_status_function = function(){
-                $.getJSON(SCRIPT_ROOT + '/_get_playing',
-                    {},
-                    function(status){
-                        //console.log(status.now_playing)
-                        if(song_playing != status.song_id){
-                            player.loadVideoById(status.song_id);
-                            player.seekTo(status.current_time,false);
-                            song_playing = song_id;
-                        }
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      height: '100%',
+      width: '100%',
+      videoId: default_start_video,      
+      events: {
+        'onReady': onPlayerReady
+      }
+    });
+    ;
+}
 
-                        if(player.getCurrentTime() - status.current_time > maxDelay){
-                            player.seekTo(status.current_time,false);
-                        }
+function onPlayerReady(evt) {
+    console.log('playing '+song_playing)
+    //if(playing)
+    evt.target.playVideo();
+};
 
-                        if(status.now_playing == 1){
-                           player.playVideo();
-                        }else{
-                           player.pauseVideo();
-                        }
-                    });
-                };
-
-            function periodicStatusUpdate(){
-                update_status_function();
-                setTimeout(periodicStatusUpdate,1000);
+var update_status_function = function(){
+    $.getJSON(SCRIPT_ROOT + '/_get_playing',
+        {},
+        function(status){
+            //console.log(status.now_playing)
+            if(song_playing != status.song_id){
+                console.log(status.song_id)
+                player.loadVideoById(status.song_id);
+                player.seekTo(status.current_time);
+                song_playing = status.song_id;
             }
 
-            periodicStatusUpdate();
+            if(player.getPlayerState() == YT.PlayerState.PLAYING || 
+                player.getPlayerState() == YT.PlayerState.PAUSED){
+                var diff = Math.abs(player.getCurrentTime() - status.current_time);
+                if(diff > maxDelay){
+                    player.seekTo(status.current_time);
+                }
+            }
+
+            if(status.now_playing == YT.PlayerState.PLAYING){
+               player.playVideo();
+               console.log("Play");
+            }else if(status.now_playing == YT.PlayerState.PAUSED){
+               player.pauseVideo();
+               console.log("Pause");
+            }else{
+                player.stopVideo();
+               console.log("End");
+            }
+        });
+    };
+
+function periodicGetStatusUpdate(){
+    update_status_function();
+    setTimeout(periodicGetStatusUpdate,1000);
+}
+
+periodicGetStatusUpdate();

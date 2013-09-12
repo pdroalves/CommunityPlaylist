@@ -29,8 +29,10 @@ var update_status_function = function(){
         {},
         function(status){
             //console.log(status.now_playing)
-            if(status.now_playing == 1){
+            if(status.now_playing == YT.PlayerState.PLAYING){
                 $("span.now_playing").html('Now playing: <b>'+status.song_playing+'</b>')
+            }else if(status.now_playing == YT.PlayerState.PAUSED){
+                $("span.now_playing").html('Now paused: <b>'+status.song_playing+'</b>')
             }else{
                 $("span.now_playing").html('<b>Not playing...</b>')
             }

@@ -179,12 +179,11 @@ def set_playing():
     global song_id
 
     boss_auditing()
-
     try:
         if check_key(session['key']):
             now_playing = request.args.get('now_playing',0,type=int)
             song_playing = request.args.get('song_playing',0,type=str)
-            current_time = request.args.get('current_time',0,type=int)
+            current_time = request.args.get('current_time',0,type=float)
             song_id = request.args.get('song_id',0,type=str)
 
             logging.critical('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
@@ -210,7 +209,7 @@ def get_playing():
             song_playing=song_playing,
             current_time=current_time
              )
-
+    print status
     return json.dumps(status)
 
 
@@ -279,6 +278,6 @@ def clear_boss():
     return logout()
 
 if __name__ == '__main__':
-    print "Starting Community Playlist"
+	print "Starting Community Playlist"
 	app.run(debug=DEBUG,host='0.0.0.0')
 	#app.run(debug=True)
