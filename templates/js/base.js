@@ -1,7 +1,8 @@
 var playing = 0;
 var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+//var SCRIPT_ROOT = ""
 var itemList = $('#show-items');
-var removeLink =$('#show-items li span a');
+
 
 function periodic_updates(){    
     update_function();
@@ -23,6 +24,12 @@ function alive_sign(){
 }
 
 alive_sign();
+
+var update_indexes = function(){
+    $("span.index").each(function (index){
+        $(this).text(index+1);
+    });
+};
 
 var update_status_function = function(){
     $.getJSON(SCRIPT_ROOT + '/_get_playing',
@@ -46,23 +53,38 @@ var get_video_container = function(id,t){
         txt = t
     }
 
-    return "<li class='video' id='"+id+"'>"
-        +"<span class='videoitem'>"
-        +txt+
-         "</span><a href=\"#\"> x</a></li>";
+    var container =
+        "<tr id='"+id+"' style='display:none;'>"
+            +"<td>"
+                +"<span class='index'>1</span>"
+            +"</td>"
+            +"<td>"
+                +"<div class='video'>"
+                    +"<span class='videoitem'>"
+                    +txt
+                     +"</span>"  
+                +"<a > x</a>"                    
+                 +"</div>"
+            +"</td>"
+         +"</tr>";
+    return container;
 };
 
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
                 function(items){
-                    var videos = document.getElementsByClassName('videoitem');
+                    var videos = document.getElementsByClassName('video');
 
                     // Percorre a lista e verifica se algum item foi removido
                     Array.prototype.forEach.call(videos, function(video) {
-                        if(items.indexOf(video.parentNode.getAttribute('id')) == -1){
+                        if(items.indexOf(video.parentNode.parentNode.getAttribute('id')) == -1){
                             console.log("removing "+video.innerText)
-                            document.getElementById(video.parentNode.getAttribute('id')).remove();
+                            $("#"+video.parentNode.parentNode.getAttribute('id')).fadeOut("fast",function(){
+                                $("#"+video.parentNode.parentNode.getAttribute('id')).remove();
+                                update_indexes();
+                            }                            
+                            );
                         }
                     }); 
 
@@ -81,14 +103,18 @@ var update_function = function(){
                     // Adiciona novos itens
                     for (item in items){                    
                         var url_item = get_video_container(items[item],items[item]);
-                        if(document.getElementById(items[item]) == null){
+                        if($("#"+items[item]).size() == 0){
+                            console.log("adding "+url_item);
                             itemList.append(
                                 url_item                                       
                                         );
-                            $("li[id=\'"+items[item]+"\']").fadeIn()
-                        }
-                        get_video_data(items[item]);
+                            update_indexes();
+                            $("#"+items[item]).fadeIn(function(){
+                               get_video_data($(this).attr("id")); 
+                            });   
+                        }                        
                     }
+
                 } 
             );                
         };
@@ -122,7 +148,7 @@ var get_video_data = function(id,calllback_function){
            // Método que atualiza o nome do vídeo na lista
              function(data,status,xhr){
                     if(document.getElementById(id) != null && data.data.title != 'NaN'){
-                        document.getElementById(id).children[0].innerHTML = data.data.title;
+                        $("#"+id+" > td > div.video > span.videoitem").text(data.data.title);
                         //document.getElementById(id).children[0].innerHTML = id;
                     }
                 }
@@ -147,15 +173,17 @@ $("#upd").click(function(){
         });
 
 // Fade In and Fade Out the Remove link on hover
-itemList.delegate('li', 'mouseover mouseout', function(event) {
+/*itemList.delegate('tr', 'mouseover mouseout', function(event) {
+    console.log($(this).attr("id"))
         var $this = $(this).find('a');
+        console.log($this)
          
         if(event.type === 'mouseover') {
-            $this.stop(true, true).fadeIn();
+            $this.fadeIn();
         } else {
-            $this.stop(true, true).fadeOut();
+            $this.fadeOut();
         }
-    });
+    });*/
 
 $("#addNewSong").click(function(){
         var button = document.getElementById("newSongUrl");
@@ -167,8 +195,7 @@ $("#addNewSong").click(function(){
 
 // Remove todo
 itemList.delegate("a", "click", function(e) {
-    //$(this).stop(true, true).fadeOut()
-    rm_function($(this).parent().attr('id'));
+    rm_function($(this).parent().parent().parent().attr('id'));
 });
 
 $("#clear-all").click(function(){
@@ -179,6 +206,14 @@ $("#clear-all").click(function(){
 });
 
 
+ $('#login-trigger').click(function(){
+            $(this).next('#login-content').slideToggle();
+            $(this).toggleClass('active');          
+            
+            // Inverte a seta
+            if ($(this).hasClass('active'))$(this).find('span').html('&#x25B2;')
+              else $(this).find('span').html('&#x25BC;')
+            });
 
   function youtubeFeedCallback(data) {
     var s = '';

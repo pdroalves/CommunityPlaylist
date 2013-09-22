@@ -20,7 +20,7 @@
 #	Pedro Alves, pdroalves@gmail.com
 #		28 August, 2013 - Campinas,SP - Brazil
 
-
+import os
 from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, _app_ctx_stack,jsonify
@@ -32,6 +32,7 @@ from time import time
 import string
 
 # configuration
+title = "Community Playlist"
 DEBUG = True
 BossOnHome = 0
 LastBossCall = 0
@@ -53,7 +54,7 @@ app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 queue = QueueManager()
 
 def gen_random_key():
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(KEY_SIZE))
+    return os.urandom(24)
 
 def redefinir_key():
     global SECRET_KEY
@@ -65,6 +66,12 @@ def check_key(key):
         return True
     else:
         return False
+
+@app.context_processor
+def inject_title():
+    global title
+    return dict(title=title)
+
 
 @app.route('/bosscall')
 def boss_call():
@@ -91,12 +98,13 @@ def boss_auditing():
 def show_entries():
     global queue
     print queue
-    return render_template('list.html',queue=queue)
+    return render_template('index2.html',queue=queue)
 
 @app.route('/js')
 @app.route('/js/<name>')
 def jsfiles(name):
     return render_template('/js/'+name)
+
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -120,7 +128,7 @@ def login():
         print "Erro ao logar" + str(err)
         logging.critical("Erro ao logar: "+str(err))
         session.pop('key',None)
-    return render_template('list.html')
+    return render_template('index2.html')
 
 @app.route('/player',methods=['GET','POST'])
 def player():
@@ -145,7 +153,7 @@ def logout():
         session.pop('key',None)
 
     print 'BossOnHome: '+ str(BossOnHome)
-    return render_template('list.html')
+    return render_template('index2.html')
 
 @app.route('/_next',methods=['POST','GET'])
 def next():
@@ -168,7 +176,7 @@ def next():
         logging.critical(err)
         logging.critical("Usuario sem permissões para tocar videos")
         session.pop('key',None)
-        return render_template('list.html')
+        return render_template('index2.html')
     return 'Ok'
 
 @app.route('/_set_playing',methods=['GET'])
@@ -193,7 +201,7 @@ def set_playing():
         logging.critical(err)
         logging.critical("Usuario sem permissões para setar o now playing")
         session.pop('key',None)
-        return render_template('list.html')
+        return render_template('index2.html')
     return 'Ok'
 
 @app.route('/_get_playing',methods=['GET'])
@@ -234,7 +242,7 @@ def clear_all():
         logging.critical(err)
         logging.critical("Usuario sem permissões limpar a playlist")
         session.pop('key',None)
-        return render_template('list.html')
+        return render_template('index2.html')
     return 'Ok'
 
 @app.route('/_add_url',methods=['POST','GET'])
@@ -268,7 +276,7 @@ def rm_url():
         logging.critical(err)
         logging.critical("Usuario sem permissões para remover item")
         session.pop('key',None)
-        return render_template('list.html')
+        return render_template('index2.html')
     return 'Ok'
 
 @app.route('/blablablaNewBoss',methods=['POST','GET'])
