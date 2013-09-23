@@ -1,69 +1,74 @@
-body {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-weight: 300;
-    font-size: 12px;
-    background: #FEFEFE;
+body{
+  background: #333333;
 }
 
-a,
-a:link {
-    outline: none;
+nav{
+	background: #222222;
 }
-h1 {
-    font-weight: 100;
-    font-size: 72px;
-    margin: 20px 0;
+nav button{
+	margin:0px;
+	background: #222222;
+	border:0px;
+	height:34px;
+	width:34px;
 }
-#container {
-    width: 800px;
-    text-align: center;
-    margin: 20px auto;
+
+.navbar-static-top {
+  margin-bottom: 19px;
 }
-#title{    
-    font-weight: 700;
-    font-size: 40px;
-    margin: 20px 0;
+
+#player{	
+	margin-left: auto;
+	margin-right: auto;
 }
-input[type="text"] {
+
+#now_playing{
+    color:white;
+  float: left;
+  padding: 15px 15px;
+  font-size: 18px;
+  line-height: 20px;
+}
+.queue-control{
+	margin:20px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#newSongUrl {
     height: 30px;
     width: 450px;
     padding: 2px;
-    margin-right: 10px;
+	margin-left: auto;
+	margin-right: auto;
     font-size: 12px;
 }
-input[type="submit"] {
-    height: 30px;
-    padding: 5px;
-    border: 1px solid #333;
-    background-color: #ccc;
-    font-size: 18px;
-    cursor: pointer;
-    outline: none;
+
+#show-items{
+	margin-left: auto;
+	margin-right: auto;
 }
-ul {
-    margin: 15px auto 0;
-    padding: 0;
-    width: 545px;
-}
-ul li {
+
+#show-items span,
+#show-items a{
     list-style-type: none;
-    font-size: 24px;
+    padding: 15px;
+	font-size:10px;
+	text-align:center;
+}
+
+#show-items{	
     cursor: move;
-    background-color: #efefef;
-    margin-bottom: 5px;
-    padding: 10px;
-    text-align: left;
+    background-color: #9C9C9C;
 }
-ul li span {
-    cursor: text;
-}
-ul li a,
-ul li a:link {
-    float: right;
-    display: none;
-    text-decoration: none;
-    color: #f03;
-}
-ul li a:hover {
+
+#show-items td a:hover {
     text-decoration: underline;
+    color: orange;
 }
+
+#show-items a,
+#show-items a:link {
+    float: right;
+    color: orange;
+}
+

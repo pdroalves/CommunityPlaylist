@@ -43,6 +43,11 @@ $("#pausePL").click(function(){
 $("#next").click(function(){
     playNextVideo();
 });
+
+$("#revert").click(function(){
+    player.seekTo(0);
+});
+
 function playVideoByUrl(url){
     player.loadVideoByUrl(url);
 };
