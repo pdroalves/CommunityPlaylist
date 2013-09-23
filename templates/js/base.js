@@ -28,6 +28,7 @@ var update_status_function = function(){
     $.getJSON(SCRIPT_ROOT + '/_get_playing',
         {},
         function(status){
+	   try{
             //console.log(status.now_playing)
             if(status.now_playing == YT.PlayerState.PLAYING){
                 $("span.now_playing").html('Now playing: <b>'+status.song_playing+'</b>')
@@ -36,6 +37,9 @@ var update_status_function = function(){
             }else{
                 $("span.now_playing").html('<b>Not playing...</b>')
             }
+	   }catch(err){
+		console.log("Exception! "+String(err));
+	   }
         });
 };
 
