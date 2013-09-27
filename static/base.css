@@ -1,8 +1,15 @@
-body {
+body, html {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 300;
     font-size: 12px;
     background: #FEFEFE;
+    min-height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+iframe {
+    min-height: 100%
 }
 
 a,
