@@ -21,15 +21,15 @@
 #		28 August, 2013 - Campinas,SP - Brazil
 
 import os
-from queue_manager import QueueManager
-from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash, _app_ctx_stack,jsonify
 import json
 import re
-import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(levelname)s:%(message)s')
-import random
-from time import time
+import binascii
 import string
+import sqlite3
+import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(levelname)s:%(message)s')
+from time import time
+from queue_manager import QueueManager
+from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, _app_ctx_stack,jsonify
 
 # configuration
 title = "Community Playlist"
@@ -44,61 +44,135 @@ song_id = ''
 
 standardStartVideoId = 'dQw4w9WgXcQ'
 standardEndVideoId = 'F0BfcdPKw8E'
-SECRET_KEY = 'NoKey'
-KEY_SIZE = 100
+privileges_map = {
+"boss":101,
+"nil":100
+}
+permissions = {
+    "set_playing":[privileges_map.get('boss')],
+    "next":[privileges_map.get('boss')],
+    "clear":[privileges_map.get('boss')]
+}
 
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+
 queue = QueueManager()
 
+class LoginGatekeeper:
+    def __init__(self,path="database.db"):
+        self.logger = logging.getLogger('DB')
+        self.path = path
+        self.create_database()
+
+        ## Each operation should happen in a transaction
+        # and should create a new connection
+    def __connect(self):
+        self.db = sqlite3.connect(self.path)
+        if self.db is None:
+            raise Exception("Couldn't create database")
+
+    def __close(self):
+        if self.db is not None:
+            self.db.commit()
+            self.db.close()
+
+    def __query(self,q):
+        if self.db is not None:
+            return self.db.execute(q)
+        else:
+            raise Exception("Connection to database is closed")
+
+    def create_database(self):
+        # To-do
+        # This database should be encrypted
+        try:
+            self.__connect()
+            self.__query("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY,name TEXT,username TEXT,password TEXT,privileges INTEGER,removed INTEGER)")
+            self.__query("CREATE TABLE IF NOT EXISTS session (id INTEGER PRIMARY KEY,fk_user INTEGER,created_ts INTEGER,key TEXT)")            
+        finally:
+            self.__close()
+        return
+
+    def add_user(self,user):
+        # To-do
+        # Add a new user
+        try:
+            self.__connect()
+        finally:
+            self.__close()
+
+    def get_user(self,credentials=None,session=None):
+        # Try to find a user with that session key
+        data = None
+        try:
+            self.__connect()
+            if credentials is not None:
+                cursor = self.__query("SELECT name,privileges,id FROM user WHERE username = \""+credentials.get('username')+"\" AND password = \""+self.encrypt(credentials.get('password'))+"\" limit 1")
+                data = [dict(name=row[0],privileges=row[1],id=row[2]) for row in cursor.fetchall()]
+            else:
+                cursor = self.__query("SELECT name,privileges,user.id FROM user INNER JOIN session ON user.id = session.fk_user WHERE key = \'"+session+"\' limit 1")
+                data = [dict(name=row[0],privileges=row[1],id=row[2]) for row in cursor.fetchall()]
+        finally:
+            self.__close()
+
+        return data
+
+    def check_user_keys(self,user,keys):
+        # To-do
+        # Check if a key provided matchs the user key        
+        try:
+            self.__connect()
+        finally:
+            self.__close()
+
+    def get_user_session(self):
+        # To-do
+        # Get the logged session    
+        try:
+            self.__connect()
+        finally:
+            self.__close()        
+
+    def set_user_session(self,data):
+        # Set the logged session
+        try:
+            self.__connect()
+            if data is not None:
+                ts = int(time())
+                self.__query("INSERT INTO session (fk_user,created_ts,key) VALUES(\""+str(data.get("fk_user"))+"\","+str(ts)+",\""+data.get("key")+"\")")
+        finally:
+            self.__close()
+
+
+    def encrypt(self,txt):
+        # To-do
+        return txt
+
+
 def gen_random_key():
-    return os.urandom(24)
+    return binascii.hexlify(os.urandom(24))
 
-def redefinir_key():
-    global SECRET_KEY
-    SECRET_KEY = gen_random_key()
-
-def check_key(key):
-    global SECRET_KEY
-    if key == SECRET_KEY:
-        return True
-    else:
-        return False
-
+def get_app_secret_key(path="blue.json"):
+    with open(path) as f:
+        data = json.load(f)
+        return data.get('key')
+      
 @app.context_processor
-def inject_title():
-    global title
-    return dict(title=title)
+def utility_processor():
+    def inject_title():
+        global title
+        return title
 
-
-@app.route('/bosscall')
-def boss_call():
-    global LastBossCall
-    try:
-        if check_key(session['key']):
-            LastBossCall = time()
-            logging.critical("Boss just called")
-    except Exception,err:
-        pass
-    return 'Ok'
-
-def boss_auditing():
-    global LastBossCall
-    global MaxCallInterval
-    global BossOnHome
-
-    if time() - LastBossCall > MaxCallInterval and BossOnHome == 1:
-        BossOnHome = 0
-        redefinir_key()
-        logging.critical('Boss left the room')
+    return dict(
+            title=inject_title
+            )
 
 @app.route('/')
 def show_entries():
-    global queue
-    print queue
-    return render_template('index2.html',queue=queue)
+    return render_template('index2.html')
 
 @app.route('/js')
 @app.route('/js/<name>')
@@ -106,53 +180,68 @@ def jsfiles(name):
     return render_template('/js/'+name)
 
 
-@app.route('/login',methods=['GET','POST'])
-def login():
-    global BossOnHome
-    global queue
-    global SECRET_KEY
-
-    boss_auditing()
-    print 'BossOnHome: '+ str(BossOnHome)
-
-    try:
-        if BossOnHome == 0:
-            BossOnHome = 1
-            redefinir_key()
-            session['key'] = SECRET_KEY
-            boss_call()
-            logging.critical("Usuario logado "+session['key'])
-        else:
-            logging.critical(session['key'])            
-    except Exception,err:
-        print "Erro ao logar" + str(err)
-        logging.critical("Erro ao logar: "+str(err))
-        session.pop('key',None)
-    return render_template('index2.html')
-
 @app.route('/player',methods=['GET','POST'])
 def player():
     return render_template('player.html')
 
+@app.route('/login',methods=['GET','POST'])
+def login():
+    global BossOnHome
+    global queue
+
+    try:
+        lgk = LoginGatekeeper()
+        ## Try to log in by the session key
+        if request.form['username'] is None:
+            if session.has_key('session_key'):
+                print session.get('session_key')
+                user_data = lgk.get_user(session=session['session_key'])
+                if user_data is None:
+                    
+                    session.pop('session_key',None)
+                    session.pop('boss',None)
+                else:                        
+                    session['session_key'] = session.get('session_key')
+                    session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
+        else:
+            # Try to log in by normal username/password keys
+            user_credentials = {
+                "username":request.form['username'],
+                "password":lgk.encrypt(request.form['password'])
+                }      
+            print user_credentials
+            user_data = lgk.get_user(credentials=user_credentials)
+            if len(user_data) > 0 :
+                ## Try to log in user by the credentials provided
+                session_key = gen_random_key()
+                session['session_key'] = session_key
+                print session['session_key']
+                #session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
+                lgk.set_user_session({"fk_user":user_data[0].get('id'),"key":session_key})
+                logging.critical("Usuario logado "+user_credentials.get('username'))
+    except Exception,err:
+        msg = "Erro ao logar: " + str(err)
+        print msg
+        logging.critical(msg)
+        
+        session.pop('session_key',None)
+
+    return render_template('index2.html')
+
 @app.route('/logout',methods=['GET','POST'])
 def logout():
-    global BossOnHome
     global queue
     global now_playing
 
     try:
-        if check_key(session['key']):
-            BossOnHome = 0
-            now_playing = 0
-            SECRET_KEY = 'NoKey'
-            logging.critical('Usuario deslogado')
+        
+        session.pop('session_key',None)
+        now_playing = -1
+        logging.critical('Usuario deslogado')
     except Exception,err:
         print "Erro ao deslogar"
         logging.critical("Erro ao deslogar: "+str(err))
-    finally:
-        session.pop('key',None)
 
-    print 'BossOnHome: '+ str(BossOnHome)
     return render_template('index2.html')
 
 @app.route('/_next',methods=['POST','GET'])
@@ -160,10 +249,14 @@ def next():
     global queue
     global standardStartVideoId
 
-    boss_auditing()
+    lgk = LoginGatekeeper()
 
     try:
-        if check_key(session['key']):
+        if session.has_key('session_key'):
+            user = lgk.get_user(session=session['session_key'])[0]
+        if user is None:
+            raise Exception("No sufficsient privileges for this operation.")
+        if user.get('privileges') in permissions.get('next'):
             videoId = queue.next()
             if videoId is not None:
                 logging.critical('Playing next song: '+videoId)
@@ -171,24 +264,32 @@ def next():
             else:
                 return json.dumps(standardEndVideoId)
         else:
+            raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
         logging.critical(err)
         logging.critical("Usuario sem permissões para tocar videos")
-        session.pop('key',None)
+        
+        session.pop('session_key',None)
         return render_template('index2.html')
     return 'Ok'
 
-@app.route('/_set_playing',methods=['GET'])
+@app.route('/_set_playing',methods=['GET','POST'])
 def set_playing():
     global now_playing
     global song_playing
     global current_time
     global song_id
+    
+    lgk = LoginGatekeeper()
 
-    boss_auditing()
     try:
-        if check_key(session['key']):
+        user = None
+        if session.has_key('session_key'):
+            user = lgk.get_user(session=session['session_key'])[0]
+        if user is None:
+            raise Exception("No sufficsient privileges for this operation.")
+        if user.get('privileges') in permissions.get('set_playing'):
             now_playing = request.args.get('now_playing',0,type=int)
             song_playing = request.args.get('song_playing',0,type=str)
             current_time = request.args.get('current_time',0,type=float)
@@ -196,11 +297,13 @@ def set_playing():
 
             logging.critical('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
         else:
+            raise Exception("No sufficssient privileges for this operation.")
             return logout()
     except Exception,err:
         logging.critical(err)
-        logging.critical("Usuario sem permissões para setar o now playing")
-        session.pop('key',None)
+        logging.critical("Usuario sem psssermissões para setar o now playing")
+        
+        session.pop('session_key',None)
         return render_template('index2.html')
     return 'Ok'
 
@@ -223,27 +326,30 @@ def get_playing():
 @app.route('/_update',methods=['POST','GET'])
 def update():
     global queue
-
     return json.dumps(queue.getQueue())
 
 @app.route('/_clear-all',methods=['POST','GET'])
 def clear_all():
     global queue
 
-    boss_auditing()
-
     try:
-        if check_key(session['key']):
+        user = None
+        if session.has_key('session_key'):
+            user = lgk.get_user(session=session['session_key'])[0]
+        if user is None:
+            raise Exception("No sufficient privileges for this operation.")
+        if user.get('privileges') in permissions.get('clear-all'):
             logging.critical('Clearing queue')
             queue.clear()
         else:
+            raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
         logging.critical(err)
-        logging.critical("Usuario sem permissões limpar a playlist")
-        session.pop('key',None)
-        return render_template('index2.html')
-    return 'Ok'
+        logging.critical("Usuario sem permissões para setar o now playing")
+        
+        session.pop('session_key',None)
+    return render_template('index2.html')
 
 @app.route('/_add_url',methods=['POST','GET'])
 def add_url():
@@ -279,12 +385,8 @@ def rm_url():
         return render_template('index2.html')
     return 'Ok'
 
-@app.route('/blablablaNewBoss',methods=['POST','GET'])
-def clear_boss():
-    logging.critical('Clearing ownership')
-    return logout()
-
 if __name__ == '__main__':
-	print "Starting Community Playlist"
+    print "Starting Community Playlist"
+    app.secret_key = get_app_secret_key()
 	#app.run(debug=DEBUG,host='0.0.0.0')
-	app.run(debug=True)
+    app.run(debug=True)

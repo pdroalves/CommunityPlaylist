@@ -15,15 +15,6 @@ $(document).ready(function() {
     setTimeout(periodic_updates,1000);
 });
 
-function alive_sign(){
-    if(document.getElementById('player') != null){
-        console.log('Saying hello')
-        $.getJSON(SCRIPT_ROOT + '/bosscall',null,null)
-    }
-    setTimeout(alive_sign,10000);
-}
-
-alive_sign();
 
 var update_indexes = function(){
     $("span.index").each(function (index){
@@ -161,15 +152,6 @@ var get_video_data = function(id,calllback_function){
         $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+id+'?v=2&alt=jsonc',calllback_function);
     }
 }
-
-$("#login").click(function(){
-  $.getJSON( SCRIPT_ROOT+'/login',
-                {},
-                function(n){
-                    localStorage.put('key',request.get('key'))
-                }
-            )   
-});
 
 $("#upd").click(function(){
             console.log('update');

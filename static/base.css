@@ -29,24 +29,6 @@ nav button{
   font-size: 18px;
   line-height: 20px;
 }
-.queue-control{
-	margin:20px;
-	margin-left: auto;
-	margin-right: auto;
-}
-#newSongUrl {
-    height: 30px;
-    width: 450px;
-    padding: 2px;
-	margin-left: auto;
-	margin-right: auto;
-    font-size: 12px;
-}
-
-#show-items{
-	margin-left: auto;
-	margin-right: auto;
-}
 
 #show-items span,
 #show-items a{
@@ -72,3 +54,15 @@ nav button{
     color: orange;
 }
 
+#queue-list{  
+  margin-left: 20%;
+  margin-right: 20%;
+}
+
+#add-items{
+    height: 30px;
+    width: 100px;
+    padding: 2px;
+    font-size: 12px;
+    margin-left:50%;
+}
