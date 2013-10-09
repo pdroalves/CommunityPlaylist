@@ -4,8 +4,8 @@ nav ul {
   padding: 0;
   list-style: none;
   position: relative;
-  float: right;
-  background: #080808;
+  float: right;  
+  background: #222222;
   border-bottom: 1px solid #080808;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
@@ -68,7 +68,6 @@ nav #login-content button{
   border: 1px solid #9E9E9E;
 }
 
-/*--------------------*/
 
 #inputs input {
   background: #f1f1f1;
@@ -93,13 +92,12 @@ nav #login-content button{
   box-shadow: 0 0 0 1px #e8c291 inset;
 }
 
-/*--------------------*/
-
 #login #actions {
   margin: 10px 0 0 0;
 }
 
 #login #submit {		
+  background: #222222;
   background-color: #d14545;
   background-image: -webkit-gradient(linear, left top, left bottom, from(#e97171), to(#d14545));
   background-image: -webkit-linear-gradient(top, #e97171, #d14545);
@@ -125,7 +123,8 @@ nav #login-content button{
 }
 
 #login #submit:hover,
-#login #submit:focus {		
+#login #submit:focus {	
+  background: #222222;	
   background-color: #e97171;
   background-image: -webkit-gradient(linear, left top, left bottom, from(#d14545), to(#e97171));
   background-image: -webkit-linear-gradient(top, #d14545, #e97171);

@@ -1,8 +1,10 @@
 body{
   background: #333333;
+  text-align:center;
 }
 
-nav{
+nav
+{
 	background: #222222;
 }
 nav button{
@@ -30,8 +32,7 @@ nav button{
   line-height: 20px;
 }
 
-#show-items span,
-#show-items a{
+#show-items span{
     list-style-type: none;
     padding: 15px;
 	font-size:10px;
@@ -40,7 +41,7 @@ nav button{
 
 #show-items{	
     cursor: move;
-    background-color: #9C9C9C;
+    background-color: #E6E6E6;
 }
 
 #show-items td a:hover {
@@ -55,14 +56,34 @@ nav button{
 }
 
 #queue-list{  
-  margin-left: 20%;
-  margin-right: 20%;
+  width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-#add-items{
+.queue-control{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#newSongUrl{
     height: 30px;
-    width: 100px;
-    padding: 2px;
+    width: 400px;
+    padding: 5px;
     font-size: 12px;
-    margin-left:50%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom:10px;
+}
+
+#addNewSong{
+    padding: 5px;
+    margin:5px;
+    height: 25px;
+    font-size: 12px;
+}
+
+#player-controls img{
+  width:24px;
+  height:auto;
 }

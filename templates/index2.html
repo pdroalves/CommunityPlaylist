@@ -58,9 +58,6 @@
                       <h2 class="form-signin-heading">Login</h2>
                       <input name=username type="text" class="form-control" placeholder="Username" autofocus="">
                       <input name=password type="password" class="form-control" placeholder="Password">
-                      <label class="checkbox">
-                        <input type="checkbox" value="remember-me"> Lembrar
-                      </label>
                       <button class="btn btn-lg btn-primary btn-block" type="submit">#GoGoGo</button>
                     </form>
                   </div>
@@ -69,13 +66,11 @@
               {% if session.session_key %}
                 <div id="player-controls">
                   <button type="submit" class="control" id="revert">
-                    <img src="{{ url_for('static', filename='repeat.jpg')}}" alt="Revert"></button>
+                    <img src="{{ url_for('static', filename='previous.png')}}" alt="Revert"></button>
                   <button type="submit" class="control" id="startPL">
-                    <img src="{{ url_for('static', filename='play.jpg')}}" alt="Play"></button>
-                  <button type="submit" class="control" id="pausePL">
-                    <img src="{{ url_for('static', filename='pause.jpg')}}" alt="Pause"></button>
+                    <img src="{{ url_for('static', filename='play.png')}}" alt="Play"></button>
                   <button type="submit" class="control" id="next">
-                    <img src="{{ url_for('static', filename='next.jpg')}}" alt="Next">
+                    <img src="{{ url_for('static', filename='next.png')}}" alt="Next">
                   </button>
                 </div> 
               {% endif %}                                   
@@ -88,33 +83,36 @@
 
 
     <div class="container-fluid">
-        {% if session.session_key %}
+          {% if not session.session_key %}
           <div class="row-fluid">
-            <div id="add-items" class="queue-control">
+            <div class="queue-control">
                 <input id="newSongUrl" type="text" />
                 <input id="addNewSong" type="submit" value="Add"/>
             </div>
           </div>
-        {% endif %}
+          {% endif %}
         <div class="row-fluid">
           {% if session.session_key %}
             <div class="col-md-3">
           {% endif %}
 
             <div id="queue-list" style="overflow:auto;">
-              <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="show-items"  >
+              <table id="show-items" cellpadding="0" cellspacing="0" border="0" class="table  table-hover table-condensed" >
               </table>
+
+              {% if session.session_key %}
+              <div class="queue-control">
+                <a href="#" id="clear-all">Clear All</a>
+              </div>
+              {% endif %}
             </div>
             
       {% if session.session_key %}
-            <div class="queue-control">
-              <a href="#" id="clear-all">Clear All</a>
-            </div>
-            
           </div>
+
           <div class="col-md-8">	 
             
-            <div id="player" align="center"></div>
+            <div id="player" align="center">oi</div>
             
             <div class="queue-control">
               <input id="newSongUrl" type="text" />
@@ -125,12 +123,6 @@
       </div>
     </div>
 
-
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
     <script src="js/jquery-1.10.2.min.js"></script>
     <script src="js/jquery-ui-1.8.7.custom.min.js"></script>
     <script src="js/jquery.inlineedit.js"></script>

@@ -33,6 +33,10 @@ function checkValidUrl(url){
 $("#startPL").click(function(){
     if(player.getPlayerState() == YT.PlayerState.PAUSED){
         player.playVideo();
+    }else{
+        if(player.getPlayerState() == YT.PlayerState.PLAYING){
+            player.pauseVideo();
+        };   
     }
 });
 
@@ -80,7 +84,6 @@ function updateStatus(){
         current_time = player.getCurrentTime();
     }
 
-
     $.getJSON( SCRIPT_ROOT + '/_set_playing',
         {'now_playing':status,
           'song_id':song_playing,
@@ -107,7 +110,18 @@ function onPlayerStateChange(evt) {
 
     if (evt.data == YT.PlayerState.ENDED) {
         playNextVideo();
+        $('#startPL img').attr("src","{{ url_for('static', filename='play.png')}}");
+        $("#startPL img").attr("state","paused");
     }else{
+        if(evt.data == YT.PlayerState.PLAYING){
+        $('#startPL img').attr("src","{{ url_for('static', filename='pause.png')}}");
+            $("#startPL img").attr("state","playing");
+        }
+        if(evt.data == YT.PlayerState.PAUSED){
+            $('#startPL img').attr("src","{{ url_for('static', filename='play.png')}}");
+            $("#startPL img").attr("state","paused");
+        }
+
         get_video_data(song_playing,
             function(data,stats,xhr){
                 //updateStatus(data.data.title,1);

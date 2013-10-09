@@ -51,7 +51,9 @@ privileges_map = {
 permissions = {
     "set_playing":[privileges_map.get('boss')],
     "next":[privileges_map.get('boss')],
-    "clear":[privileges_map.get('boss')]
+    "clear-all":[privileges_map.get('boss')],
+    "add":[privileges_map.get('boss')],
+    "rm":[privileges_map.get('boss')]
 }
 
 # create our little application :)
@@ -288,20 +290,20 @@ def set_playing():
         if session.has_key('session_key'):
             user = lgk.get_user(session=session['session_key'])[0]
         if user is None:
-            raise Exception("No sufficsient privileges for this operation.")
+            raise Exception("No sufficient privileges for this operation.")
         if user.get('privileges') in permissions.get('set_playing'):
             now_playing = request.args.get('now_playing',0,type=int)
             song_playing = request.args.get('song_playing',0,type=str)
             current_time = request.args.get('current_time',0,type=float)
             song_id = request.args.get('song_id',0,type=str)
 
-            logging.critical('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
+            logging.info('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
         else:
-            raise Exception("No sufficssient privileges for this operation.")
+            raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
         logging.critical(err)
-        logging.critical("Usuario sem psssermissões para setar o now playing")
+        logging.critical("Usuario sem permissões para setar o now playing")
         
         session.pop('session_key',None)
         return render_template('index2.html')
@@ -331,7 +333,8 @@ def update():
 @app.route('/_clear-all',methods=['POST','GET'])
 def clear_all():
     global queue
-
+    lgk = LoginGatekeeper()
+    
     try:
         user = None
         if session.has_key('session_key'):
@@ -355,28 +358,38 @@ def clear_all():
 def add_url():
     global queue
 
+    
     url = request.args.get('element',0,type=str)
     match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
     if match:
         queue.add(match.group(1))
-        print 'Python says: '+url
+        print 'Added: '+url
         logging.critical('Added '+url)
     else:
-        print 'Url invalida '+url
+        print 'Invalid url '+url
         logging.critical('Error! URL Invalid '+url)
+        
     return str(len(queue.queue)+1)
 
 @app.route('/_rm_url',methods=['POST','GET'])
 def rm_url():
     global queue
+    lgk = LoginGatekeeper()
+
     try:
-        if check_key(session['key']):
+        user = None
+        if session.has_key('session_key'):
+            user = lgk.get_user(session=session['session_key'])[0]
+        if user is None:
+            raise Exception("No sufficient privileges for this operation.")
+        if user.get('privileges') in permissions.get('add'):
             url = request.args.get('element',0,type=str)
             if DEBUG:
                 print 'removendo '+str(url)
             logging.critical('Removing '+url)
             queue.rm(url)
         else:
+            raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
         logging.critical(err)

@@ -28,9 +28,9 @@ var update_status_function = function(){
         function(status){
 	   try{
             //console.log(status.now_playing)
-            if(status.now_playing == YT.PlayerState.PLAYING){
+            if(status.now_playing == 1){
                 $("span.now_playing").html('Now playing: <b>'+status.song_playing+'</b>')
-            }else if(status.now_playing == YT.PlayerState.PAUSED){
+            }else if(status.now_playing == 2){
                 $("span.now_playing").html('Now paused: <b>'+status.song_playing+'</b>')
             }else{
                 $("span.now_playing").html('<b>Not playing...</b>')
@@ -158,19 +158,6 @@ $("#upd").click(function(){
             update_function();
         });
 
-// Fade In and Fade Out the Remove link on hover
-/*itemList.delegate('tr', 'mouseover mouseout', function(event) {
-    console.log($(this).attr("id"))
-        var $this = $(this).find('a');
-        console.log($this)
-         
-        if(event.type === 'mouseover') {
-            $this.fadeIn();
-        } else {
-            $this.fadeOut();
-        }
-    });*/
-
 $("#addNewSong").click(function(){
         var button = document.getElementById("newSongUrl");
         console.log(button.value);
@@ -201,7 +188,7 @@ $("#clear-all").click(function(){
               else $(this).find('span').html('&#x25BC;')
             });
 
-  function youtubeFeedCallback(data) {
+function youtubeFeedCallback(data) {
     var s = '';
     s += '<img src="' + data.entry.media$group.media$thumbnail[0].url + '" width="' + data.entry.media$group.media$thumbnail[0].width + '" height="' + data.entry.media$group.media$thumbnail[0].height + '" alt="' + data.entry.media$group.media$thumbnail[0].yt$name + '" align="right"/>';
     s += '<b>Title:</b> ' + data.entry.title.$t + '<br/>';
@@ -215,6 +202,56 @@ $("#clear-all").click(function(){
     s += '<br/>' + data.entry.media$group.media$description.$t.replace(/\n/g, '<br/>') + '<br/>';
     s += '<br/><a href="' + data.entry.media$group.media$player.url + '" target="_blank">Watch on YouTube</a>';
     document.write(s);
-  };
+};
 
+
+///////////////////////
+// Player controls
+///////////////////////
+$('#startPL').bind('mouseover',function(e){
+    if($("#startPL img").attr("state") == "playing"){
+        $('#startPL img').attr("src","{{ url_for('static', filename='pause_mouse_over.png')}}");
+    }else{
+        if($("#startPL img").attr("state") == "paused"){
+            $('#startPL img').attr("src","{{ url_for('static', filename='play_mouse_over.png')}}");
+        }
+    }
+});
+
+$('#startPL').bind('mouseleave',function(e){
+    if($("#startPL img").attr("state") == "playing"){
+        $('#startPL img').attr("src","{{ url_for('static', filename='pause.png')}}");
+    }else{
+        if($("#startPL img").attr("state") == "paused"){
+            $('#startPL img').attr("src","{{ url_for('static', filename='play.png')}}");
+        }
+    }
+});
+
+$('#startPL').bind('click',function(e){
+    if($("#startPL img").attr("state") == "paused"){
+        $('#startPL img').attr("src","{{ url_for('static', filename='pause_mouse_over.png')}}");
+    }else{
+        if($("#startPL img").attr("state") == "playing"){
+            $('#startPL img').attr("src","{{ url_for('static', filename='play_mouse_over.png')}}");
+        }
+    }
+});
+
+
+$('#next').bind('mouseover',function(e){
+    $('#next img').attr("src","{{ url_for('static', filename='next_mouse_over.png')}}");
+});
+
+$('#next').bind('mouseleave',function(e){
+    $('#next img').attr("src","{{ url_for('static', filename='next.png')}}");
+});
+
+$('#revert').bind('mouseover',function(e){
+    $('#revert img').attr("src","{{ url_for('static', filename='previous_mouse_over.png')}}");
+});
+
+$('#revert').bind('mouseleave',function(e){
+    $('#revert img').attr("src","{{ url_for('static', filename='previous.png')}}");
+});
 
