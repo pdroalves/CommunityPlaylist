@@ -44,23 +44,20 @@ var get_video_container = function(id,t){
         txt = t
     }
 
-    return "<li class='video' id='"+id+"'>"
-        +"<span class='videoitem'>"
-        +txt+
-         "</span><a href=\"#\"> x</a></li>";
+    return "<li class='list-group-item video' id='"+id+"'>"+txt+"<a href=\"#\"> x</a></li>";
 };
 
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
                 function(items){
-                    var videos = document.getElementsByClassName('videoitem');
+                    var videos = document.getElementsByClassName('list-group-item');
 
                     // Percorre a lista e verifica se algum item foi removido
                     Array.prototype.forEach.call(videos, function(video) {
-                        if(items.indexOf(video.parentNode.getAttribute('id')) == -1){
+                        if(items.indexOf(video.getAttribute('id')) == -1){
                             console.log("removing "+video.innerText)
-                            document.getElementById(video.parentNode.getAttribute('id')).remove();
+                            document.getElementById(video.getAttribute('id')).remove();
                         }
                     }); 
 
@@ -114,8 +111,8 @@ var rm_function = function(id){
             )            
         };
 
-var get_video_data = function(id,calllback_function){
-    if(calllback_function == null){
+var get_video_data = function(id,callback_function){
+    if(callback_function == null){
         $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+id+'?v=2&alt=jsonc',
            // Método que atualiza o nome do vídeo na lista
              function(data,status,xhr){
@@ -126,7 +123,7 @@ var get_video_data = function(id,calllback_function){
                 }
             );
     }else{
-        $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+id+'?v=2&alt=jsonc',calllback_function);
+        $.getJSON('http://gdata.youtube.com/feeds/api/videos/'+id+'?v=2&alt=jsonc',callback_function);
     }
 }
 

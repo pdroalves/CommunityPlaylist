@@ -1,43 +1,74 @@
 <!doctype HTML>
-<html>
+<html ng-app>
     <head>
         <title>Community Playlist</title>
         <meta charset="utf-8" />
-        <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}" type="text/css" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}" type="text/css" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}" type="text/css" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <div id="container">
-            <span id="title">Community PlayList</span>
-            <br>      
-
-         {% if session.key %}
-         You are the boss!!!
-         <br>
-        <div id="player"></div>
-        <br>
-        <a href="/logout" id="logout">Logout</a>
-        <br>
-        <input id="startPL" type="submit" value=Start>
-        <input id="pausePL" type="submit" value=Pause>
-        <input id="next" type="submit" value=">>">
-        {% else %}
-        <br>
-        <a href="/login" id="login">Login</a>
-        {% endif %}
-		<br>
-        <span class="now_playing" id="empty"></span>
-        <br>
-        <input id="newSongUrl" type="text" />
-        <input id="addNewSong" type="submit" value="Add"/>
-		<!--
-        <br>
-	    <input id="upd" type="submit" value="Atualizar">
-		//-->
-        <br>
- 		<ul id="show-items"></ul>
-          {% if session.key %}
-            <a href="#" id="clear-all">Clear All</a>
-        {% endif %}
+        <div ng-controller="PlaylistCtrl">
+            <div class="container">
+                <div class="row">
+                    <h1>Community Playlist</h1>
+                </div>
+                {% if session.key %}
+                <div class="alert alert-success">You're the boss!</div>
+                <div class="row">
+                    <div class="col-md-12 text-right">
+                        <a href="/logout" class="btn btn-danger">Logout <i class="glyphicon glyphicon-log-out"></i></a>
+                    </div>
+                </div>
+                <div class="row">
+                        <div id="player" class="col-md-12"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 col-md-offset-5 text-center">
+                        <div class="btn-group">
+                            <button class="btn btn-primary" type="submit" id="startPL" value="Start"><i class="glyphicon glyphicon-play"></i></button>
+                            <button class="btn btn-primary" id="pausePL" type="submit" value="Pause"><i class="glyphicon glyphicon-pause"></i></button>
+                            <button class="btn btn-primary" id="next" type="submit" value=">>"><i class="glyphicon glyphicon-fast-forward"></i></button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="row">
+                    <div class="col-md-2 col-md-offset-5 text-center">
+                        <a href="/login" class="btn btn-success">Login <i class="glyphicon glyphicon-log-in"></i></a>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <span class="now_playing" id="empty"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-10 col-md-offset-1 text-center">
+                        <div class="form-inline">
+                            <div class="form-group">
+                                <input ng-model="videoUrl" class="form-control" id="newSongUrl" type="text" />
+                            </div>
+                            <button id="addNewSong" type="button" value="Add" class="btn btn-success">Add <i class="glyphicon glyphicon-plus-sign"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 col-md-offset-3">
+                        <ul id="show-items" class="list-group">
+                        </ul>
+                    </div>
+                </div>
+                {% if session.key %}
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                            <a href="#" id="clear-all" class="btn btn-danger"><span class="glyphicon glyphicon-minus-sign"></span> Clear All</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
         <script src="js/jquery-1.10.2.min.js"></script>
         <script src="js/jquery-ui-1.8.7.custom.min.js"></script>
@@ -45,5 +76,6 @@
         <script src="js/pubsub.js"></script>
         <script src="js/base.js"></script>
         <script src="js/youtube.js"></script>
+        <script src="js/playlist.js"></script>
     </body>
 </html>
