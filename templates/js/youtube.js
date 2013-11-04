@@ -13,6 +13,7 @@
                   height: '390',
                   width: '640',
                   videoId: default_start_video,
+                  controls: 0,
                   events: {
                     'onReady': onPlayerReady,
                     'onStateChange': onPlayerStateChange
@@ -45,6 +46,7 @@
             };
 
            function playNextVideo(){
+                rm_function(song_playing);
                 $.getJSON( SCRIPT_ROOT + '/_next',
                         {},
                         function(item){
