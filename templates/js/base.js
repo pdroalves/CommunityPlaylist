@@ -41,11 +41,27 @@ var update_status_function = function(){
         });
 };
 
-var get_video_container = function(id,t){
-    var txt = "Carregando...";
+var get_video_container = function(id,title,duration){
+    var txt_title = "Carregando..."
+    var txt_duration = "?"
 
-    if(id != t){
-        txt = t
+    if(id != title){
+        txt_title = title
+    }
+    if(duration != '?'){
+        var time_duration = new Date((duration*1000));
+        if(time_duration.getMinutes() < 9){
+            txt_duration = ''+"0"+time_duration.getMinutes();
+        }else{
+            txt_duration = ''+time_duration.getMinutes();
+        }
+        txt_duration = txt_duration+":";
+        if(time_duration.getSeconds() < 9){
+            txt_duration = txt_duration + "0"+time_duration.getSeconds();
+        }else{
+            txt_duration = txt_duration+time_duration.getSeconds();
+        }
+
     }
 
     var container =
@@ -56,7 +72,7 @@ var get_video_container = function(id,t){
             +"<td>"
                 +"<div class='video'>"
                     +"<span class='videoitem'>"
-                    +txt
+                    +txt_title+" ("+txt_duration+")"
                      +"</span>"  
                 +"<a > x</a>"                    
                  +"</div>"
@@ -71,10 +87,16 @@ var update_function = function(){
                 function(items){
                     var videos = document.getElementsByClassName('video');
 
+                    var urls = new Array();
+
+                    Array.prototype.forEach.call(items,function(item){
+                        urls.push(item.url);
+                    });
+
                     // Percorre a lista e verifica se algum item foi removido
                     Array.prototype.forEach.call(videos, function(video) {
-                        if(items.indexOf(video.parentNode.parentNode.getAttribute('id')) == -1){
-                            console.log("removing "+video.innerText)
+                        if(urls.indexOf(video.parentNode.parentNode.getAttribute('id')) == -1){
+                            console.log("removing "+video.innerText);
                             $("#"+video.parentNode.parentNode.getAttribute('id')).fadeOut("fast",function(){
                                 $("#"+video.parentNode.parentNode.getAttribute('id')).remove();
                                 update_indexes();
@@ -97,15 +119,15 @@ var update_function = function(){
 
                     // Adiciona novos itens
                     for (item in items){                    
-                        var url_item = get_video_container(items[item],items[item]);
-                        if($("#"+items[item]).size() == 0){
+                        var url_item = get_video_container(items[item].url,items[item].title,items[item].duration);
+                        if($("#"+items[item].url).size() == 0){
                             console.log("adding "+url_item);
                             itemList.append(
                                 url_item                                       
                                         );
                             update_indexes();
-                            $("#"+items[item]).fadeIn(function(){
-                               get_video_data($(this).attr("id")); 
+                            $("#"+items[item].url).fadeIn(function(){
+                                console.log("#"+$(this).attr("id")+" > td > div.video > span.videoitem")
                             });   
                         }                        
                     }

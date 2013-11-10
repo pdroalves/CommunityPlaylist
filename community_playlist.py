@@ -30,6 +30,7 @@ import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, fo
 from time import time
 from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, _app_ctx_stack,jsonify
+from youtube_handler import YoutubeHandler
 
 # configuration
 title = "Community Playlist"
@@ -62,6 +63,7 @@ app.config.from_object(__name__)
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 queue = QueueManager()
+yth = YoutubeHandler()
 
 class LoginGatekeeper:
     def __init__(self,path="database.db"):
@@ -257,12 +259,12 @@ def next():
         if session.has_key('session_key'):
             user = lgk.get_user(session=session['session_key'])[0]
         if user is None:
-            raise Exception("No sufficsient privileges for this operation.")
+            raise Exception("No sufficient privileges for this operation.")
         if user.get('privileges') in permissions.get('next'):
-            videoId = queue.next()
-            if videoId is not None:
-                logging.critical('Playing next song: '+videoId)
-                return json.dumps(videoId)
+            video_url = queue.next()
+            if video_url is not None:
+                logging.critical('Playing next song: '+video_url)
+                return json.dumps(video_url)
             else:
                 return json.dumps(standardEndVideoId)
         else:
@@ -317,6 +319,7 @@ def get_playing():
     global song_id
 
     status = dict(
+            title='',
             now_playing=now_playing,
             song_id=song_id,
             song_playing=song_playing,
@@ -357,8 +360,6 @@ def clear_all():
 @app.route('/_add_url',methods=['POST','GET'])
 def add_url():
     global queue
-
-    
     url = request.args.get('element',0,type=str)
     match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
     if match:
