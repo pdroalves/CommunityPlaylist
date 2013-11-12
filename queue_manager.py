@@ -197,6 +197,11 @@ class QueueManager:
 
 	def sort(self,playtime_percent_warning=1.5):
 		# Ordena a fila de acordo com o tempo de espera e a quantidade de votos
+		votes = lambda x:x.get("votes").get("positive")-x.get("votes").get("negative")
+		starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")
+		avg_starvation = sum([starvation(element) for element in self.queue])/len(self.queue)
+
+		lista.sort(key=lambda x:votes(x) if starvation(x) <= 0 else votes(x)*playtime_percent_warning*starvation(x)/avg_starvation,reverse=True)
 		return 
 
 
