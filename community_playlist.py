@@ -26,7 +26,7 @@ import re
 import binascii
 import string
 import sqlite3
-import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(levelname)s:%(message)s')
+import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(name)s - %(levelname)s:%(message)s')
 from time import time
 from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, _app_ctx_stack,jsonify
@@ -57,7 +57,6 @@ permissions = {
     "rm":[privileges_map.get('boss')]
 }
 
-# create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
@@ -91,11 +90,12 @@ class LoginGatekeeper:
 
     def create_database(self):
         # To-do
-        # This database should be encrypted
+        # This database must be encrypted
         try:
             self.__connect()
-            self.__query("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY,name TEXT,username TEXT,password TEXT,privileges INTEGER,removed INTEGER)")
-            self.__query("CREATE TABLE IF NOT EXISTS session (id INTEGER PRIMARY KEY,fk_user INTEGER,created_ts INTEGER,key TEXT)")            
+            self.__query("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY,name TEXT,username TEXT UNIQUE,password TEXT,privileges INTEGER,removed INTEGER)")
+            self.__query("CREATE TABLE IF NOT EXISTS session (id INTEGER PRIMARY KEY,fk_user INTEGER,created_ts INTEGER,key TEXT)")     
+            self.__query("INSERT OR IGNORE INTO user (username,password,privileges) VALUES ('admin','admin',"+str(privileges_map.get("boss"))+")")       
         finally:
             self.__close()
         return
@@ -331,7 +331,8 @@ def get_playing():
 @app.route('/_update',methods=['POST','GET'])
 def update():
     global queue
-    return json.dumps(queue.getQueue())
+    queue.sort()
+    return json.dumps({"queue":queue.getQueue()})
 
 @app.route('/_clear-all',methods=['POST','GET'])
 def clear_all():
@@ -363,7 +364,7 @@ def add_url():
     url = request.args.get('element',0,type=str)
     match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
     if match:
-        queue.add(match.group(1))
+        queue.add(url=match.group(1),creator=request.remote_addr)
         print 'Added: '+url
         logging.critical('Added '+url)
     else:
@@ -399,8 +400,15 @@ def rm_url():
         return render_template('index2.html')
     return 'Ok'
 
+@app.route("/_vote",methods=['GET'])
+def register_vote():
+    global queue
+    print request.args
+    queue.register_vote(url=request.args.get('url'),positive=int(request.args.get('positive')),negative=int(request.args.get('negative')),creator=request.remote_addr)
+    return 'OK'
+
 if __name__ == '__main__':
     print "Starting Community Playlist"
     app.secret_key = get_app_secret_key()
-	#app.run(debug=DEBUG,host='0.0.0.0')
+    #app.run(debug=False,host='0.0.0.0')
     app.run(debug=True)

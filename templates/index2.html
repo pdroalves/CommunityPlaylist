@@ -8,19 +8,10 @@
     <link rel="shortcut icon" href="../../assets/ico/favicon.png">
 
     <title>{{ title() }}</title>
-
-    <!-- Bootstrap core CSS -->
    
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" type="text/css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}" type="text/css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}"  />
-
-
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="../../assets/js/html5shiv.js"></script>
-      <script src="../../assets/js/respond.min.js"></script>
-    <![endif]--> 
 
   </head>
 
@@ -93,7 +84,7 @@
           {% endif %}
         <div class="row-fluid">
           {% if session.session_key %}
-            <div class="col-md-3">
+            <div class="col-md-6">
           {% endif %}
 
             <div id="queue-list" style="overflow:auto;">
@@ -110,7 +101,7 @@
       {% if session.session_key %}
           </div>
 
-          <div class="col-md-8">	 
+          <div class="col-md-6">	 
             
             <div id="player" align="center">oi</div>
             

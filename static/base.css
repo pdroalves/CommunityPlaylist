@@ -25,18 +25,11 @@ nav button{
 }
 
 #now_playing{
-    color:white;
+  color:white;
   float: left;
   padding: 15px 15px;
   font-size: 18px;
   line-height: 20px;
-}
-
-#show-items span{
-    list-style-type: none;
-    padding: 15px;
-	font-size:10px;
-	text-align:center;
 }
 
 #show-items{	
@@ -86,4 +79,19 @@ nav button{
 #player-controls img{
   width:24px;
   height:auto;
+}
+
+.vote img{
+  width:10px;
+  height:auto;
+  margin:5px 10px;
+}
+
+span{
+  font-family:"Times New Roman", Times, serif;
+}
+
+.videoitem{
+  font-family:"Times New Roman", Times, serif;
+  font-size:15px;  
 }

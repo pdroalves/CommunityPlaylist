@@ -16,10 +16,32 @@ $(document).ready(function() {
 });
 
 
-var update_indexes = function(){
+var update_index = function(){
     $("span.index").each(function (index){
         $(this).text(index+1);
     });
+};
+
+var check_index_and_sort = function(base){
+    $("tr").each(function (index,item){
+        if(index == 0 && item.getAttribute("id") != base[0].url){
+            $("tr#"+base[0].url).insertBefore($("tr")[0]);
+        }else if(item.getAttribute("id") != base[index].url){
+            $("tr#"+base[index].url).insertAfter($("tr")[index-1]);            
+        }
+    });
+};
+
+var cmp = function(listA,listB){
+    if(listA.length != listB.length){
+        return false;
+    }
+    for(var index=0;index<listA.length;index++){
+        if(listA[index].url != listB[index].url){
+            return false;
+        }
+    }
+    return true;
 };
 
 var update_status_function = function(){
@@ -28,7 +50,9 @@ var update_status_function = function(){
         function(status){
 	   try{
             //console.log(status.now_playing)
-            if(status.now_playing == 1){
+            if(status.song_playing == '0'){
+                update_status_function();
+            }else if(status.now_playing == 1){
                 $("span.now_playing").html('Now playing: <b>'+status.song_playing+'</b>')
             }else if(status.now_playing == 2){
                 $("span.now_playing").html('Now paused: <b>'+status.song_playing+'</b>')
@@ -41,7 +65,7 @@ var update_status_function = function(){
         });
 };
 
-var get_video_container = function(id,title,duration){
+var get_video_container = function(id,title,duration,vpositive,vnegative){
     var txt_title = "Carregando..."
     var txt_duration = "?"
 
@@ -65,7 +89,7 @@ var get_video_container = function(id,title,duration){
     }
 
     var container =
-        "<tr id='"+id+"' style='display:none;'>"
+        "<tr id='"+id+"' style='display:none;' valign='middle'>"
             +"<td>"
                 +"<span class='index'>1</span>"
             +"</td>"
@@ -73,9 +97,25 @@ var get_video_container = function(id,title,duration){
                 +"<div class='video'>"
                     +"<span class='videoitem'>"
                     +txt_title+" ("+txt_duration+")"
-                     +"</span>"  
-                +"<a > x</a>"                    
+                     +"</span>"                    
                  +"</div>"
+            +"</td>"
+            +"<td>"
+                +"<div  class='vote'>"
+                    +"<a href='#'>"
+                        +"<img src={{ url_for('static', filename='like.png')}} alt='Next' id='like' />"
+                    +"</a>"
+                    +"<span class='votepos'>"+vpositive+"</span>"
+                +"</div>"
+                +"<div  class='vote'>"
+                    +"<a href='#'>"
+                        +"<img src={{ url_for('static', filename='unlike.png')}} alt='Next' id='unlike' />"
+                    +"</a>"
+                    +"<span class='voteneg'>"+vnegative+"</span>"
+                +"</div>"
+            +"</td>"
+            +"<td>"  
+                +"<a href='#' class='remove'>  x</a>"
             +"</td>"
          +"</tr>";
     return container;
@@ -84,54 +124,55 @@ var get_video_container = function(id,title,duration){
 var update_function = function(){
            $.getJSON( SCRIPT_ROOT+'/_update',
                 {},
-                function(items){
+                function(data){
+                    var items = data.queue;
                     var videos = document.getElementsByClassName('video');
 
                     var urls = new Array();
-
                     Array.prototype.forEach.call(items,function(item){
                         urls.push(item.url);
                     });
 
-                    // Percorre a lista e verifica se algum item foi removido
+                    // Checks if any item was removed
                     Array.prototype.forEach.call(videos, function(video) {
                         if(urls.indexOf(video.parentNode.parentNode.getAttribute('id')) == -1){
                             console.log("removing "+video.innerText);
                             $("#"+video.parentNode.parentNode.getAttribute('id')).fadeOut("fast",function(){
                                 $("#"+video.parentNode.parentNode.getAttribute('id')).remove();
-                                update_indexes();
+                                update_index();
                             }                            
                             );
                         }
                     }); 
 
-                    /*var count = 0;
-
-                    // Verifica se o indice dos videos está correto
-                    Array.prototype.forEach.call(videos, function(video) {
-                      if(items.indexOf(video.parentNode.getAttribute('id')) != count){
-                            console.log("Corrigindo indice "+video.parentNode.getAttribute('id'))
-                            video.innerText = video.parentNode.getAttribute('id');
-                            get_video_data(video.parentNode.getAttribute('id'));
-                        }
-                        count++;
-                    }); */
-
-                    // Adiciona novos itens
+                    // Add new items
                     for (item in items){                    
-                        var url_item = get_video_container(items[item].url,items[item].title,items[item].duration);
+                        var url_item = get_video_container(items[item].url,items[item].title,items[item].duration,items[item].positive,items[item].negative);
                         if($("#"+items[item].url).size() == 0){
-                            console.log("adding "+url_item);
-                            itemList.append(
-                                url_item                                       
-                                        );
-                            update_indexes();
-                            $("#"+items[item].url).fadeIn(function(){
-                                console.log("#"+$(this).attr("id")+" > td > div.video > span.videoitem")
-                            });   
+
+                            itemList.append(url_item);
+                            
+                            $("#"+items[item].url).fadeIn(function(){});   
                         }                        
                     }
 
+                    // Update votes
+                    Array.prototype.forEach.call(items,function(item){
+                        $("tr#"+item.url+" td span.votepos").text(item.positive);
+                        $("tr#"+item.url+" td span.voteneg").text(item.negative);
+                    });
+
+                    // Reorder items
+                    var queue = new Array();
+                    $("tr").each(function(index,item){
+                        queue.push({"url":item.getAttribute("id")});
+                    });     
+                    if(!cmp(queue,items)){
+                        console.log("Sorting");
+                        check_index_and_sort(items)
+                    };
+
+                    update_index();
                 } 
             );                
         };
@@ -188,9 +229,31 @@ $("#addNewSong").click(function(){
         button.value = "";
     });
 
+// Votes
+$("*").delegate("tr div.vote a","click",function(e){
+    var type = $(this).children().attr("id");
+    var id = $(this).parent().parent().parent().attr("id");
+    console.log("Opa! "+id);
+
+    if(type == "like"){
+        var positive = 1;
+        var negative = 0;
+    }else{
+        var positive = 0;
+        var negative = 1;        
+    }
+
+    $.getJSON(SCRIPT_ROOT+'/_vote',
+                {"url":id,"positive":positive,"negative":negative},
+                update_function()    
+            );
+});
+
 // Remove todo
-itemList.delegate("a", "click", function(e) {
-    rm_function($(this).parent().parent().parent().attr('id'));
+$("*").delegate("tr a.remove", "click", function(e) {
+    var id = $(this).parent().parent().attr("id");
+    console.log("Tchau "+id);
+    rm_function(id);
 });
 
 $("#clear-all").click(function(){
