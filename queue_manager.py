@@ -233,11 +233,11 @@ class QueueManager:
 		logger.info("Queue cleared...")
 		return
 
-	def __custom_sort(self):
+	def __custom_sort(self,starvation_rate=2):
 		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
-		lambda_starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")
+		lambda_starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")*starvation_rate
 
-		hungry = [x for x in self.queue if lambda_starvation(x) < 0]
+		hungry = [x for x in self.queue if lambda_starvation(x) > 0]
 
 		if len(hungry) > 1:
 			for x,y in zip(hungry,hungry[1:]):
