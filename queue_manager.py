@@ -125,7 +125,7 @@ class QueueManager:
 			print creator
 			cursor.execute("INSERT INTO vote_history (url,tag,positive) VALUES(\'%s\',\'%s\',1)" % (url,str(creator)))
 			id = cursor.execute('SELECT id FROM playlist WHERE url = \''+url+'\' and removed = 0 ORDER BY id DESC LIMIT 1').fetchone()
-			ytData = self.yth.get_info(url).json()
+			ytData = self.yth.get_info(url).json
 			data = ytData.get('data')
 
 			new_item = {
