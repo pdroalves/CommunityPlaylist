@@ -42,6 +42,7 @@ song_playing = None
 now_playing = False
 current_time = 0
 song_id = ''
+default_key = 'chave'
 
 standardStartVideoId = 'dQw4w9WgXcQ'
 standardEndVideoId = 'F0BfcdPKw8E'
@@ -160,9 +161,18 @@ def gen_random_key():
     return binascii.hexlify(os.urandom(24))
 
 def get_app_secret_key(path="blue.json"):
-    with open(path) as f:
-        data = json.load(f)
-        return data.get('key')
+    global default_key
+    try:
+        with open(path) as f:
+            data = json.load(f)
+            if data.has_key('key'):
+                return data.get('key')
+            else:
+                logger.info("Couldn't get key from "+path+".\nusing default key.")
+                return default_key
+    except IOError:
+        logger.info("Couldn't open "+path+".\nUsing default key.")
+        return default_key
       
 @app.context_processor
 def utility_processor():
@@ -325,6 +335,7 @@ def get_playing():
             song_playing=song_playing,
             current_time=current_time
              )
+    logging.info("Now playing: "+str(song_playing))
     return json.dumps(status)
 
 
@@ -410,5 +421,5 @@ def register_vote():
 if __name__ == '__main__':
     print "Starting Community Playlist"
     app.secret_key = get_app_secret_key()
-    #app.run(debug=False,host='0.0.0.0')
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0')
+    #app.run(debug=True)

@@ -106,7 +106,7 @@ function periodicStatusUpdate(){
 periodicStatusUpdate();
 
 function onPlayerStateChange(evt) {
-    console.log('new state '+evt.data)
+    //console.log('new state '+evt.data)
 
     if (evt.data == YT.PlayerState.ENDED) {
         playNextVideo();

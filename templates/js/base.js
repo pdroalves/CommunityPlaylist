@@ -23,11 +23,17 @@ var update_index = function(){
 };
 
 var check_index_and_sort = function(base){
+    if(base.length == 0){
+        return;
+    };
     $("tr").each(function (index,item){
+
         if(index == 0 && item.getAttribute("id") != base[0].url){
             $("tr#"+base[0].url).insertBefore($("tr")[0]);
-        }else if(item.getAttribute("id") != base[index].url){
-            $("tr#"+base[index].url).insertAfter($("tr")[index-1]);            
+        }else if(index < base.length){
+            if(item.getAttribute("id") != base[index].url){
+                $("tr#"+base[index].url).insertAfter($("tr")[index-1]);            
+            }
         }
     });
 };
@@ -233,7 +239,6 @@ $("#addNewSong").click(function(){
 $("*").delegate("tr div.vote a","click",function(e){
     var type = $(this).children().attr("id");
     var id = $(this).parent().parent().parent().attr("id");
-    console.log("Opa! "+id);
 
     if(type == "like"){
         var positive = 1;

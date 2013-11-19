@@ -45,17 +45,14 @@ class QueueManager:
 
 	def calc_playtime(self,url):
 		# Calculate how long until this song start to play without any queue order change
-		candidates = [x for x in self.queue if x.get('url') == url]
+		candidates = [x for x in self.queue if x.get('url') != url]
+		playtime = 0
 
-		# Assert this url is in queue
-		if len(candidates) > 0:
-			index = self.queue.index(candidates[0])
-			playtime = 0
+		for candidate in candidates:
+			playtime += candidate.get("data").get("duration")
 
-			for i in range(index):
-				playtime = playtime + int(self.queue[i].get('data').get('duration'))
-			return playtime
-		return -1
+		return playtime
+
 
 	def calc_full_playtime(self):
 		queue_length = len(self.queue)
@@ -97,11 +94,23 @@ class QueueManager:
 					if tag in voters_history.get(url).get("positive"):
 						voters_history.get(url).get("positive").remove(tag)					
 
+			logger.info("Votes founded: "+str(voters_history.keys()))
 			for h in history:
 				print h
 				id = h[0]
 				url = h[1]
-				ytData = self.yth.get_info(url).json()
+				if voters_history.has_key(url):
+					positive_voters = voters_history.get(url).get("positive")
+					negative_voters = voters_history.get(url).get("negative")
+				else:
+					logger.info("No votes for "+str(url))
+					positive_voters = []
+					negative_voters = []
+				data = self.yth.get_info(url)
+				if data is not None:
+					ytData = data.json()
+				else:
+					ytData = {"data":{}}
 
 				self.queue.append({
 									"id":id,
@@ -109,8 +118,8 @@ class QueueManager:
 									"added_at":int(time.time()),
 									"playtime":self.calc_full_playtime(),	
 									"voters":{
-										"positive":voters_history.get(url).get("positive"),
-										"negative":voters_history.get(url).get("negative")
+										"positive":positive_voters,
+										"negative":negative_voters
 									},
 									"data":ytData.get('data')
 									})
@@ -125,7 +134,7 @@ class QueueManager:
 			print creator
 			cursor.execute("INSERT INTO vote_history (url,tag,positive) VALUES(\'%s\',\'%s\',1)" % (url,str(creator)))
 			id = cursor.execute('SELECT id FROM playlist WHERE url = \''+url+'\' and removed = 0 ORDER BY id DESC LIMIT 1').fetchone()
-			ytData = self.yth.get_info(url).json
+			ytData = self.yth.get_info(url).json()
 			data = ytData.get('data')
 
 			new_item = {
@@ -235,9 +244,12 @@ class QueueManager:
 
 	def __custom_sort(self,starvation_rate=2):
 		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
-		lambda_starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")*starvation_rate
+		lambda_starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")*starvation_rate-x.get("data").get("duration")
 
-		hungry = [x for x in self.queue if lambda_starvation(x) > 0]
+		hungry = [x for x in self.queue if lambda_starvation(x) >= 0]
+
+		if len(hungry) > 0:
+			print ','.join([x.get("data").get("title")+"Playtime: "+str(x.get("playtime"))+" Starvation:"+str(lambda_starvation(x)) for x in hungry])
 
 		if len(hungry) > 1:
 			for x,y in zip(hungry,hungry[1:]):

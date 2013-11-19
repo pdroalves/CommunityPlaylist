@@ -21,12 +21,20 @@
 
 import requests
 import json
+import logging
 
+logger = logging.getLogger("YTH")
 class YoutubeHandler:
 	def __init__(self,api_url=['http://gdata.youtube.com/feeds/api/videos/','?v=2&alt=jsonc']):
 		assert len(api_url) == 2
-		assert int(requests.get(api_url[0]+api_url[1]).status_code) == 200
 		self.api_url = api_url
 		
-	def get_info(self,id):
-		return requests.get(self.api_url[0]+id+self.api_url[1])
+	def get_info(self,id,max_repeats=10):
+		count = 0
+		while count < max_repeats:
+			try:
+				return requests.get(self.api_url[0]+id+self.api_url[1])
+				count = max_repeats
+			except Exception,err:
+				logger.info(err)
+				count += 1
