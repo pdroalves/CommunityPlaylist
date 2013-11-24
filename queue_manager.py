@@ -30,11 +30,14 @@ db = None
 logger = logging.getLogger("QueueManager")
 
 class QueueManager:
+	
+
 	def __init__(self,database='database.db'):
 		self.queue = []
 		self.db_file = database
 		#self.sync()
 		self.yth = YoutubeHandler()
+		self.__start_pause_ts=0
 		logger.info("Queue started")
 
 	def __exit__(self, type, value, traceback):
@@ -74,7 +77,7 @@ class QueueManager:
 			cursor.execute('CREATE TABLE IF NOT EXISTS vote_history (id INTEGER PRIMARY KEY,url INTEGER NOT NULL,tag TEXT NOT NULL,positive INTEGER DEFAULT 0,negative INTEGER DEFAULT 0)')
 			history = cursor.execute('SELECT id,playlist.url FROM playlist WHERE played = 0 and removed = 0  ORDER BY id ASC').fetchall()
 			voters_history = {}
-			voters = cursor.execute("SELECT vh.url,tag,positive,negative FROM vote_history vh INNER JOIN playlist p ON p.url = vh.url WHERE played = 0 and removed = 0 GROUP BY tag HAVING MAX(vh.id)").fetchall()		
+			voters = cursor.execute("SELECT vh.url,tag,positive,negative FROM vote_history vh INNER JOIN (SELECT MAX(id) id FROM vote_history GROUP BY url,tag) max_vh ON max_vh.id = vh.id INNER JOIN playlist p ON p.url = vh.url WHERE played = 0 and removed = 0").fetchall()		
 			
 			for voter in voters:
 				url = voter[0]
@@ -204,6 +207,24 @@ class QueueManager:
 				logger.info("Updating votes for "+str(element.get("url"))+": "+str(voters))
 		return
 
+	def update_playtime(self,diff=0):
+		for element in self.queue:
+			logger.info("Adding %s to %s playtime." % (diff,element.get("url")))
+			element.update({"playtime":element.get("playtime")+diff})
+
+	def set_pause(self,b):
+		if self.__start_pause_ts == 0:
+			self.__start_pause_ts = time.time()
+			
+		if b:
+			logger.info("Queue paused")
+			if time.time()-self.__start_pause_ts > 2:
+				self.update_playtime(time.time()-self.__start_pause_ts)
+				self.__start_pause_ts = time.time()
+		elif self.__start_pause_ts > 0:
+			logger.info("Queue resumed") 
+			self.__start_pause_ts = 0
+
 	def sync(self):
 		cursor = self.get_db().cursor()
 
@@ -242,7 +263,7 @@ class QueueManager:
 		logger.info("Queue cleared...")
 		return
 
-	def __custom_sort(self,starvation_rate=2):
+	def __custom_sort(self,starvation_rate=1):
 		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
 		lambda_starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")*starvation_rate-x.get("data").get("duration")
 

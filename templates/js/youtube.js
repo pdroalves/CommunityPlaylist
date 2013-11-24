@@ -114,7 +114,7 @@ function onPlayerStateChange(evt) {
         $("#startPL img").attr("state","paused");
     }else{
         if(evt.data == YT.PlayerState.PLAYING){
-        $('#startPL img').attr("src","{{ url_for('static', filename='pause.png')}}");
+            $('#startPL img').attr("src","{{ url_for('static', filename='pause.png')}}");
             $("#startPL img").attr("state","playing");
         }
         if(evt.data == YT.PlayerState.PAUSED){

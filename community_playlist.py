@@ -65,6 +65,8 @@ app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 queue = QueueManager()
 yth = YoutubeHandler()
 
+logger = logging.getLogger("Main")
+
 class LoginGatekeeper:
     def __init__(self,path="database.db"):
         self.logger = logging.getLogger('DB')
@@ -77,11 +79,14 @@ class LoginGatekeeper:
         self.db = sqlite3.connect(self.path)
         if self.db is None:
             raise Exception("Couldn't create database")
+        else:
+            self.logger.info("Database connection UP")
 
     def __close(self):
         if self.db is not None:
             self.db.commit()
             self.db.close()
+            self.logger.info("Database connection DOWN")
 
     def __query(self,q):
         if self.db is not None:
@@ -232,11 +237,13 @@ def login():
                 print session['session_key']
                 #session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
                 lgk.set_user_session({"fk_user":user_data[0].get('id'),"key":session_key})
-                logging.critical("Usuario logado "+user_credentials.get('username'))
+                logger.critical("Usuario logado "+user_credentials.get('username'))
+            else:
+                raise Exception("No login data found...")
     except Exception,err:
         msg = "Erro ao logar: " + str(err)
         print msg
-        logging.critical(msg)
+        logger.critical(msg)
         
         session.pop('session_key',None)
 
@@ -247,14 +254,13 @@ def logout():
     global queue
     global now_playing
 
-    try:
-        
+    try:        
         session.pop('session_key',None)
         now_playing = -1
-        logging.critical('Usuario deslogado')
+        logger.critical('Usuario deslogado')
     except Exception,err:
         print "Erro ao deslogar"
-        logging.critical("Erro ao deslogar: "+str(err))
+        logger.critical("Erro ao deslogar: "+str(err))
 
     return render_template('index2.html')
 
@@ -273,7 +279,7 @@ def next():
         if user.get('privileges') in permissions.get('next'):
             video_url = queue.next()
             if video_url is not None:
-                logging.critical('Playing next song: '+video_url)
+                logger.critical('Playing next song: '+video_url)
                 return json.dumps(video_url)
             else:
                 return json.dumps(standardEndVideoId)
@@ -281,8 +287,8 @@ def next():
             raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
-        logging.critical(err)
-        logging.critical("Usuario sem permissões para tocar videos")
+        logger.critical(err)
+        logger.critical("Usuario sem permissões para tocar videos")
         
         session.pop('session_key',None)
         return render_template('index2.html')
@@ -302,20 +308,25 @@ def set_playing():
         if session.has_key('session_key'):
             user = lgk.get_user(session=session['session_key'])[0]
         if user is None:
-            raise Exception("No sufficient privileges for this operation.")
+            raise Exception("User not logged...")
         if user.get('privileges') in permissions.get('set_playing'):
             now_playing = request.args.get('now_playing',0,type=int)
             song_playing = request.args.get('song_playing',0,type=str)
             current_time = request.args.get('current_time',0,type=float)
             song_id = request.args.get('song_id',0,type=str)
 
-            logging.info('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
+            if now_playing == 1:
+                queue.set_pause(False)
+            elif now_playing == 2:
+                queue.set_pause(True)
+
+            logger.info('Set Playing: '+'('+song_id+') -'+str(song_playing)+" - "+str(now_playing)+" - "+str(current_time))
         else:
             raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
-        logging.critical(err)
-        logging.critical("Usuario sem permissões para setar o now playing")
+        logger.critical(err)
+        logger.critical("Usuario sem permissões para setar o now playing")
         
         session.pop('session_key',None)
         return render_template('index2.html')
@@ -335,7 +346,7 @@ def get_playing():
             song_playing=song_playing,
             current_time=current_time
              )
-    logging.info("Now playing: "+str(song_playing))
+    logger.info("Now playing: "+str(song_playing))
     return json.dumps(status)
 
 
@@ -357,14 +368,14 @@ def clear_all():
         if user is None:
             raise Exception("No sufficient privileges for this operation.")
         if user.get('privileges') in permissions.get('clear-all'):
-            logging.critical('Clearing queue')
+            logger.critical('Clearing queue')
             queue.clear()
         else:
             raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
-        logging.critical(err)
-        logging.critical("Usuario sem permissões para setar o now playing")
+        logger.critical(err)
+        logger.critical("Usuario sem permissões para setar o now playing")
         
         session.pop('session_key',None)
     return render_template('index2.html')
@@ -377,10 +388,10 @@ def add_url():
     if match:
         queue.add(url=match.group(1),creator=request.remote_addr)
         print 'Added: '+url
-        logging.critical('Added '+url)
+        logger.critical('Added '+url)
     else:
         print 'Invalid url '+url
-        logging.critical('Error! URL Invalid '+url)
+        logger.critical('Error! URL Invalid '+url)
         
     return str(len(queue.queue)+1)
 
@@ -399,14 +410,14 @@ def rm_url():
             url = request.args.get('element',0,type=str)
             if DEBUG:
                 print 'removendo '+str(url)
-            logging.critical('Removing '+url)
+            logger.critical('Removing '+url)
             queue.rm(url)
         else:
             raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
-        logging.critical(err)
-        logging.critical("Usuario sem permissões para remover item")
+        logger.critical(err)
+        logger.critical("Usuario sem permissões para remover item")
         session.pop('key',None)
         return render_template('index2.html')
     return 'Ok'
