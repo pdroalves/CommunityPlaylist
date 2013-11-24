@@ -10,8 +10,7 @@
    
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" type="text/css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}" type="text/css" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}"  />
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}"  type="text/css" />
   </head>
 
   <body>
@@ -62,7 +61,7 @@
                   <button type="submit" class="control" id="next">
                     <img src="{{ url_for('static', filename='next.png')}}" alt="Next">
                   </button>
-                </div> 
+                </div>
               {% endif %}                                   
               </li>
             </ul>
@@ -107,6 +106,47 @@
             <div class="queue-control">
               <input id="newSongUrl" type="text" />
               <input id="addNewSong" type="submit" value="Add"/>
+            </div>
+            <br>
+            <div id="player-vinheta">
+                  <audio id="player_vinheta1">
+                    <source src="" type="audio/mpeg" />
+                    <em>No support to HTML5 audio.</em>
+                  </audio>
+                  <audio id="player_vinheta2">
+                    <source src="" type="audio/mpeg" />
+                    <em>No support to HTML5 audio.</em>
+                  </audio>
+                  <audio id="player_vinheta3">
+                    <source src="" type="audio/mpeg" />
+                    <em>No support to HTML5 audio.</em>
+                  </audio>
+                  
+                  <input type="file" class="control" id="input_vinheta1" accept="audio/*" style="display:none" onchange="javascript:set_vinheta1(this.files)"/>
+                  <input type="file" class="control" id="input_vinheta2" accept="audio/*" style="display:none" onchange="javascript:set_vinheta2(this.files)"/>
+                  <input type="file" class="control" id="input_vinheta3" accept="audio/*" style="display:none" onchange="javascript:set_vinheta3(this.files)"/>
+
+                  <a href="javascript:get_vinheta1()">
+                      <img src="{{ url_for('static', filename='vinheta.png')}}" alt="Vinheta1">
+                  </a>
+                    <a href="javascript:play_vinheta1()">
+                      <span class="vinheta_txt" id="txt_vinheta1">Empty</span>
+                    </a>
+                    <br>
+                  <a href="javascript:get_vinheta2()">
+                      <img src="{{ url_for('static', filename='vinheta.png')}}" alt="Vinheta2">
+                  </a>
+                    <a href="javascript:play_vinheta2()">
+                      <span class="vinheta_txt" id="txt_vinheta2">Empty</span>
+                    </a>
+                    <br>
+                  <a href="javascript:get_vinheta3()">
+                      <img src="{{ url_for('static', filename='vinheta.png')}}" alt="Vinheta3">
+                  </a>
+                    <a href="javascript:play_vinheta3()"> 
+                      <span class="vinheta_txt" id="txt_vinheta3">Empty</span>
+                    </a>
+                    <br>
             </div>
           </div>
       {% endif %}

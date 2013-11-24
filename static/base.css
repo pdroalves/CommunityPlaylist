@@ -76,7 +76,8 @@ nav button{
     font-size: 12px;
 }
 
-#player-controls img{
+#player-controls img,
+#player-vinheta img{
   width:24px;
   height:auto;
 }

@@ -1,3 +1,5 @@
+window.URL = window.URL || window.webkitURL;
+
 var playing = 0;
 var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 //var SCRIPT_ROOT = ""
@@ -345,3 +347,56 @@ $('#revert').bind('mouseleave',function(e){
     $('#revert img').attr("src","{{ url_for('static', filename='previous.png')}}");
 });
 
+function set_vinheta1(files){
+    window.URL.revokeObjectURL($("#player_vinheta1").attr("src"));
+    $("#player_vinheta1").attr("src",window.URL.createObjectURL(files[0]));
+    $("#txt_vinheta1").text(files[0].name);
+};
+
+function set_vinheta2(files){
+    window.URL.revokeObjectURL($("#player_vinheta2").attr("src"));
+    $("#player_vinheta2").attr("src",window.URL.createObjectURL(files[0]));
+    $("#txt_vinheta2").text(files[0].name);
+};
+
+function set_vinheta3(files){
+    window.URL.revokeObjectURL($("#player_vinheta3").attr("src"));
+    $("#player_vinheta3").attr("src",window.URL.createObjectURL(files[0]));
+    $("#txt_vinheta3").text(files[0].name);
+};
+
+function get_vinheta1(){
+    $("#input_vinheta1").click();
+};
+
+function get_vinheta2(){
+    $("#input_vinheta2").click();
+};
+
+function get_vinheta3(){
+    $("#input_vinheta3").click();
+};
+
+function play_vinheta1(){
+    if(document.getElementById("player_vinheta1").paused){
+        document.getElementById("player_vinheta1").play();
+    }else{
+        document.getElementById("player_vinheta1").pause();        
+    }
+};
+
+function play_vinheta2(){
+    if(document.getElementById("player_vinheta2").paused){
+        document.getElementById("player_vinheta2").play();
+    }else{
+        document.getElementById("player_vinheta2").pause();        
+    }
+};
+
+function play_vinheta3(){
+    if(document.getElementById("player_vinheta3").paused){
+        document.getElementById("player_vinheta3").play();
+    }else{
+        document.getElementById("player_vinheta3").pause();        
+    }
+};

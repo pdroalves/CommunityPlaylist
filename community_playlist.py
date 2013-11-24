@@ -433,5 +433,5 @@ def register_vote():
 if __name__ == '__main__':
     print "Starting Community Playlist"
     app.secret_key = get_app_secret_key()
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=False,host='0.0.0.0')
     #app.run(debug=True)
