@@ -30,11 +30,10 @@ db = None
 logger = logging.getLogger("QueueManager")
 
 class QueueManager:
-	
-
 	def __init__(self,database='database.db'):
 		self.queue = []
 		self.db_file = database
+		assert self.get_db() != None
 		#self.sync()
 		self.yth = YoutubeHandler()
 		self.__start_pause_ts=0
@@ -48,6 +47,7 @@ class QueueManager:
 
 	def calc_playtime(self,url):
 		# Calculate how long until this song start to play without any queue order change
+		assert type(url) == str
 		candidates = [x for x in self.queue if x.get('url') != url]
 		playtime = 0
 
@@ -60,17 +60,24 @@ class QueueManager:
 	def calc_full_playtime(self):
 		queue_length = len(self.queue)
 		if queue_length > 0:
-			return self.calc_playtime(url=self.queue[queue_length-1])
+			return self.calc_playtime(url=str(self.queue[queue_length-1].get("url")))
 		else:
 			return 0
+
+	def get_db_connection(self):
+		return sqlite3.connect(self.db_file)
+
+	def commit(self):
+		self.get_db().commit()
+		logger.info("Commit")
+		return
 
 	def get_db(self):
 		global db 
 
 		top = _app_ctx_stack.top
-		db_file = self.db_file
 		if db is None:
-			db = sqlite3.connect(db_file)
+			db = self.get_db_connection()
 			cursor = db.cursor()
 
 			cursor.execute('CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY,url TEXT,played INTEGER DEFAULT 0,removed INTEGER DEFAULT 0)')
@@ -126,6 +133,7 @@ class QueueManager:
 									},
 									"data":ytData.get('data')
 									})
+				self.commit()
 			logger.info("DB loaded:\n\t"+str(self.queue))
 		return db
 
@@ -183,29 +191,34 @@ class QueueManager:
 
 	def register_vote(self,url,positive,negative,creator):
 		assert type(creator) == str
-		if type(positive) == int and type(negative) == int:
+		assert type(positive) == int
+		assert type(negative) == int
+		try:
 			cursor = self.get_db().cursor()
 			candidates = [item for item in self.queue if item.get('url') == url]
 
-			if len(candidates) > 0:
-				element = candidates[0]
+			assert len(candidates) > 0
+			
+			element = candidates[0]
 
-				# Update voters
-				voters = element.get("voters")
-				if positive > 0 and creator not in voters.get("positive"):
-					voters.get("positive").append(creator)
-					if creator in voters.get("negative"):
-						voters.get("negative").remove(creator)
-				if negative > 0 and creator not in voters.get("negative"):
-					voters.get("negative").append(creator)
-					if creator in voters.get("positive"):
-						voters.get("positive").remove(creator)
+			# Update voters
+			voters = element.get("voters")
+			if positive > 0 and creator not in voters.get("positive"):
+				voters.get("positive").append(creator)
+				if creator in voters.get("negative"):
+					voters.get("negative").remove(creator)
+			if negative > 0 and creator not in voters.get("negative"):
+				voters.get("negative").append(creator)
+				if creator in voters.get("positive"):
+					voters.get("positive").remove(creator)
 
-				element.update({"voters":voters})
-				cursor.execute("INSERT INTO vote_history (url,tag,positive,negative) VALUES (\'%s\',\'%s\',%s,%s)" % (url,creator,str(positive),str(negative)))
-				self.commit()
-				logger.info("Updating votes for "+str(element.get("url"))+": "+str(voters))
-		return
+			element.update({"voters":voters})
+			cursor.execute("INSERT INTO vote_history (url,tag,positive,negative) VALUES (\'%s\',\'%s\',%s,%s)" % (url,creator,str(positive),str(negative)))
+			self.commit()
+			logger.info("Updating votes for "+str(element.get("url"))+": "+str(voters))
+		except:
+			return False
+		return True
 
 	def update_playtime(self,diff=0):
 		for element in self.queue:
@@ -215,7 +228,7 @@ class QueueManager:
 	def set_pause(self,b):
 		if self.__start_pause_ts == 0:
 			self.__start_pause_ts = time.time()
-			
+
 		if b:
 			logger.info("Queue paused")
 			if time.time()-self.__start_pause_ts > 2:
@@ -289,9 +302,3 @@ class QueueManager:
 		self.__custom_sort()
 		#print [{"url":x.get("url"),"votes":lambda_votes(x)} for x in self.queue]
 		return 
-
-
-	def commit(self):
-		self.get_db().commit()
-		logger.info("Commit")
-		return
