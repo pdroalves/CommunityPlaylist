@@ -39,7 +39,7 @@ BossOnHome = 0
 LastBossCall = 0
 MaxCallInterval = 21
 song_playing = None
-now_playing = False
+now_playing = 0
 current_time = 0
 song_id = ''
 default_key = 'chave'
@@ -63,6 +63,7 @@ app.config.from_object(__name__)
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 queue = QueueManager()
+queue.set_pause(True)
 yth = YoutubeHandler()
 
 logger = logging.getLogger("Main")

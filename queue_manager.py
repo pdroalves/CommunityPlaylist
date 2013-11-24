@@ -33,7 +33,7 @@ class QueueManager:
 	def __init__(self,database='database.db'):
 		self.queue = []
 		self.db_file = database
-		assert self.get_db() != None
+		self.conn = None
 		#self.sync()
 		self.yth = YoutubeHandler()
 		self.__start_pause_ts=0
@@ -45,7 +45,7 @@ class QueueManager:
 		db.close()
 		logger.info("Queue finished")
 
-	def calc_playtime(self,url):
+	def calc_playtime(self,url,min_starvation_time=1200):
 		# Calculate how long until this song start to play without any queue order change
 		assert type(url) == str
 		candidates = [x for x in self.queue if x.get('url') != url]
@@ -54,7 +54,7 @@ class QueueManager:
 		for candidate in candidates:
 			playtime += candidate.get("data").get("duration")
 
-		return playtime
+		return max(playtime,min_starvation_time)
 
 
 	def calc_full_playtime(self):
@@ -73,12 +73,10 @@ class QueueManager:
 		return
 
 	def get_db(self):
-		global db 
-
 		top = _app_ctx_stack.top
-		if db is None:
-			db = self.get_db_connection()
-			cursor = db.cursor()
+		if self.conn is None:
+			self.conn = self.get_db_connection()
+			cursor = self.conn.cursor()
 
 			cursor.execute('CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY,url TEXT,played INTEGER DEFAULT 0,removed INTEGER DEFAULT 0)')
 			cursor.execute('CREATE TABLE IF NOT EXISTS vote_history (id INTEGER PRIMARY KEY,url INTEGER NOT NULL,tag TEXT NOT NULL,positive INTEGER DEFAULT 0,negative INTEGER DEFAULT 0)')
@@ -135,7 +133,7 @@ class QueueManager:
 									})
 				self.commit()
 			logger.info("DB loaded:\n\t"+str(self.queue))
-		return db
+		return self.conn
 
 	def add(self,url,creator):
 		cursor = self.get_db().cursor()
@@ -220,24 +218,30 @@ class QueueManager:
 			return False
 		return True
 
-	def update_playtime(self,diff=0):
-		for element in self.queue:
-			logger.info("Adding %s to %s playtime." % (diff,element.get("url")))
-			element.update({"playtime":element.get("playtime")+diff})
-
-	def set_pause(self,b):
+	def update_playtime(self):
+		diff = 0
 		if self.__start_pause_ts == 0:
 			self.__start_pause_ts = time.time()
 
-		if b:
+		if self.paused:
 			logger.info("Queue paused")
 			if time.time()-self.__start_pause_ts > 2:
-				self.update_playtime(time.time()-self.__start_pause_ts)
+				diff = time.time()-self.__start_pause_ts
 				self.__start_pause_ts = time.time()
 		elif self.__start_pause_ts > 0:
+			diff = time.time()-self.__start_pause_ts
 			logger.info("Queue resumed") 
 			self.__start_pause_ts = 0
 
+		if diff > 0.1:
+			for element in self.queue:
+				logger.info("Adding %s to %s playtime." % (diff,element.get("url")))
+				element.update({"playtime":element.get("playtime")+diff})
+
+	def set_pause(self,paused):
+		self.paused = paused
+		self.update_playtime()
+	
 	def sync(self):
 		cursor = self.get_db().cursor()
 
@@ -276,11 +280,21 @@ class QueueManager:
 		logger.info("Queue cleared...")
 		return
 
-	def __custom_sort(self,starvation_rate=1):
-		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
-		lambda_starvation = lambda x: time.time() - x.get("added_at")-x.get("playtime")*starvation_rate-x.get("data").get("duration")
+	def __is_starving(self,element,starvation_rate=2,min_starvation_time=0):
+		assert element.has_key("added_at")
+		assert element.has_key("playtime")
+		assert element.has_key("data")
+		assert element.get("data").has_key("duration")
 
-		hungry = [x for x in self.queue if lambda_starvation(x) >= 0]
+		return time.time() - element.get("added_at")-element.get("playtime")*starvation_rate-element.get("data").get("duration") > min_starvation_time
+
+	def __custom_sort(self,starvation_rate=1):
+		self.update_playtime()
+
+		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
+		lambda_starvation = lambda x: self.__is_starving(element=x,starvation_rate=starvation_rate)
+
+		hungry = [x for x in self.queue if lambda_starvation(x)]
 
 		if len(hungry) > 0:
 			print ','.join([x.get("data").get("title")+"Playtime: "+str(x.get("playtime"))+" Starvation:"+str(lambda_starvation(x)) for x in hungry])
@@ -294,11 +308,11 @@ class QueueManager:
 			self.queue[self.queue.index(x)+1:len(self.queue)] = sorted(self.queue[self.queue.index(x)+1:len(self.queue)],key=lambda_votes,reverse=True)
 		else:
 			self.queue[0:len(self.queue)] = sorted(self.queue[0:len(self.queue)],key=lambda_votes,reverse=True)	
-		logger.info("Sorting queue")	
+		logger.info("Sorting queue")
+		return True,hungry
 
 	def sort(self):
 		# Ordena a fila de acordo com o tempo de espera e a quantidade de votos
 		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
-		self.__custom_sort()
-		#print [{"url":x.get("url"),"votes":lambda_votes(x)} for x in self.queue]
-		return 
+		status,hungry=self.__custom_sort()
+		return status,hungry
