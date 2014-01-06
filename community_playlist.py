@@ -32,8 +32,16 @@ from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, _app_ctx_stack,jsonify
 from youtube_handler import YoutubeHandler
 
+logger = logging.getLogger("Main")
 # configuration
-title = "Community Playlist"
+default_settings = """{"title":"Community Playlist","standardStartVideoId":"dQw4w9WgXcQ","standardEndVideoId":"F0BfcdPKw8E"}"""
+try:
+	with open("settings.json") as f:
+		settings = json.load(f)
+except Exception,err:
+	logger.critical("Couldn't find settings file. Loading default settings.")
+	settings = json.loads(default_settings)
+title = settings["title"]
 DEBUG = True
 BossOnHome = 0
 LastBossCall = 0
@@ -44,8 +52,8 @@ current_time = 0
 song_id = ''
 default_key = 'chave'
 
-standardStartVideoId = 'dQw4w9WgXcQ'
-standardEndVideoId = 'F0BfcdPKw8E'
+standardStartVideoId = settings["standardStartVideoId"]
+standardEndVideoId = settings["standardEndVideoId"]
 privileges_map = {
 "boss":101,
 "nil":100
@@ -66,7 +74,6 @@ queue = QueueManager()
 queue.set_pause(True)
 yth = YoutubeHandler()
 
-logger = logging.getLogger("Main")
 
 class LoginGatekeeper:
     def __init__(self,path="database.db"):

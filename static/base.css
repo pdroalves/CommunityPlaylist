@@ -1,5 +1,9 @@
 body{
-  background: #333333;
+  background: #E8DFC2;
+  background-image: url('/static/background.jpg');
+  background-repeat: no-repeat;
+  background-position:50% 5%;
+  background-attachment:fixed;
   text-align:center;
 }
 

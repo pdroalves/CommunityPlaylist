@@ -50,10 +50,20 @@ class QueueManager:
 		assert type(url) == str
 		candidates = [x for x in self.queue if x.get('url') != url]
 		playtime = 0
-
+		
 		for candidate in candidates:
-			playtime += candidate.get("data").get("duration")
-
+			try:
+				playtime += candidate.get("data").get("duration")
+			except Exception,err:
+				if candidate is None:
+					logger.critical("Candidate is null.\n\t%s" % candidates)
+				elif not candidate.has_key("data"):
+					logger.critical("Candidate %s doesn't have 'data' field" % candidate)
+				elif type(candidate.get("data")) != dict:
+					logger.critical("Candidate 'data' is weird. It is not a dict.")
+				elif not candidate.get("data").has_key("duration"):
+					logger.critical("Candidate %s doesn't have 'duration' field" % candidate)
+				logger.critical(str(err))
 		return max(playtime,min_starvation_time)
 
 
@@ -115,12 +125,13 @@ class QueueManager:
 					positive_voters = []
 					negative_voters = []
 				data = self.yth.get_info(url)
-				if data is not None:
-					ytData = data.json()
-				else:
-					ytData = {"data":{}}
+				try:
+					if type(data) is not dict:
+						ytData = data.json()
+					else:
+						ytData = data
 
-				self.queue.append({
+					self.queue.append({
 									"id":id,
 									"url":url,
 									"added_at":int(time.time()),
@@ -131,6 +142,9 @@ class QueueManager:
 									},
 									"data":ytData.get('data')
 									})
+				except Exception,err:
+					logger.critical(str(err))
+					logger.critical("Url: %s - Data: %s" % str(url,data))
 				self.commit()
 			logger.info("DB loaded:\n\t"+str(self.queue))
 		return self.conn
@@ -144,9 +158,10 @@ class QueueManager:
 			cursor.execute("INSERT INTO vote_history (url,tag,positive) VALUES(\'%s\',\'%s\',1)" % (url,str(creator)))
 			id = cursor.execute('SELECT id FROM playlist WHERE url = \''+url+'\' and removed = 0 ORDER BY id DESC LIMIT 1').fetchone()
 			ytData = self.yth.get_info(url).json()
-			data = ytData.get('data')
+			try:
+				data = ytData.get('data')
 
-			new_item = {
+				new_item = {
 							"id":id,
 							"url":url,
 							"added_at":int(time.time()),
@@ -157,8 +172,11 @@ class QueueManager:
 							},
 							"data":ytData.get('data')
 						}
-			self.queue.append(new_item)
-			logger.info("Item added: "+str(new_item))
+				self.queue.append(new_item)
+				logger.info("Item added: "+str(new_item))
+			except Exception,err:
+				logger.critical(str(err))
+				logger.critical("Url: %s - Data: %s" % str(url,data))
 		self.commit()
 		return new_item
 
@@ -262,13 +280,14 @@ class QueueManager:
 
 	def getQueue(self):
 		self.get_db()
-		queue = [{
-					"url":element.get('url'),
-					"title":element.get('data').get('title'),
-					"duration":element.get('data').get('duration'),
-					"positive":len(element.get('voters').get('positive')),
-					"negative":len(element.get('voters').get('negative'))
-				} for element in self.queue]
+		if len(self.queue) > 0:
+			queue = [{
+						"url":element.get('url'),
+						"title":element.get('data').get('title'),
+						"duration":element.get('data').get('duration'),
+						"positive":len(element.get('voters').get('positive')),
+						"negative":len(element.get('voters').get('negative'))
+					} for element in self.queue]
 		return queue
 
 	def clear(self):
@@ -284,16 +303,20 @@ class QueueManager:
 		assert element.has_key("added_at")
 		assert element.has_key("playtime")
 		assert element.has_key("data")
-		assert element.get("data").has_key("duration")
+		if not element.get("data").has_key("duration"):
+			duration = 120
+		else:
+			duration = element.get("data").get("duration")
 
-		return time.time() - element.get("added_at")-element.get("playtime")*starvation_rate-element.get("data").get("duration") > min_starvation_time
+		return time.time() - element.get("added_at")-element.get("playtime")*starvation_rate-duration > min_starvation_time
 
-	def __custom_sort(self,starvation_rate=1):
+	def __custom_sort(self,starvation_rate=3):
 		self.update_playtime()
 
 		lambda_votes = lambda x:len(x.get("voters").get("positive"))-len(x.get("voters").get("negative"))
-		lambda_starvation = lambda x: self.__is_starving(element=x,starvation_rate=starvation_rate)
-
+		#lambda_starvation = lambda x: self.__is_starving(element=x,starvation_rate=starvation_rate)
+		lambda_starvation = lambda x: False
+		
 		hungry = [x for x in self.queue if lambda_starvation(x)]
 
 		if len(hungry) > 0:

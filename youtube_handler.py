@@ -23,6 +23,7 @@
 import requests
 import json
 import logging
+import time
 
 logger = logging.getLogger("YTH")
 class YoutubeHandler:
@@ -34,8 +35,22 @@ class YoutubeHandler:
 		count = 0
 		while count < max_repeats:
 			try:
-				return requests.get(self.api_url[0]+id+self.api_url[1])
+				r = requests.get(self.api_url[0]+id+self.api_url[1])
+				status = r.status_code
+				headers = r.headers['content_type']
+				encoding = r.encoding
+				text = r.text
+				data = r.json()
+				assert status == 200
+				if status == 200:
+					return data
+				else:
+					logger.critical("Requests error for url %s: status %d" %((str(id)),status))
 				count = max_repeats
+				time.sleep(1)
 			except Exception,err:
 				logger.info(err)
+				print "Id: %s ==> %s" % (id,err)
+				print "Id: %s ==> %d" % (id,status)
+				time.sleep(1)
 				count += 1
