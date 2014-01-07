@@ -157,7 +157,12 @@ class QueueManager:
 			print creator
 			cursor.execute("INSERT INTO vote_history (url,tag,positive) VALUES(\'%s\',\'%s\',1)" % (url,str(creator)))
 			id = cursor.execute('SELECT id FROM playlist WHERE url = \''+url+'\' and removed = 0 ORDER BY id DESC LIMIT 1').fetchone()
-			ytData = self.yth.get_info(url).json()
+			data = self.yth.get_info(url)
+			if not type(data) == dict:
+				ytData = data.json()
+			else:
+				ytData = data
+			print ytData.get("data").get("title")
 			try:
 				data = ytData.get('data')
 
@@ -280,15 +285,16 @@ class QueueManager:
 
 	def getQueue(self):
 		self.get_db()
+		fila = []
 		if len(self.queue) > 0:
-			queue = [{
+			fila += [{
 						"url":element.get('url'),
 						"title":element.get('data').get('title'),
 						"duration":element.get('data').get('duration'),
 						"positive":len(element.get('voters').get('positive')),
 						"negative":len(element.get('voters').get('negative'))
 					} for element in self.queue]
-		return queue
+		return fila
 
 	def clear(self):
 		cursor = self.get_db().cursor()

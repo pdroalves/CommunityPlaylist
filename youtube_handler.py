@@ -37,11 +37,10 @@ class YoutubeHandler:
 			try:
 				r = requests.get(self.api_url[0]+id+self.api_url[1])
 				status = r.status_code
-				headers = r.headers['content_type']
-				encoding = r.encoding
+				#headers = r.headers['content_type']
+				#encoding = r.encoding
 				text = r.text
 				data = r.json()
-				assert status == 200
 				if status == 200:
 					return data
 				else:
