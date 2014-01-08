@@ -162,7 +162,7 @@ class QueueManager:
 				ytData = data.json()
 			else:
 				ytData = data
-			print ytData.get("data").get("title")
+			#print ytData.get("data").get("title")
 			try:
 				data = ytData.get('data')
 
