@@ -391,15 +391,23 @@ def clear_all():
 @app.route('/_add_url',methods=['POST','GET'])
 def add_url():
     global queue
-    url = request.args.get('element',0,type=str)
-    match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
-    if match:
-        queue.add(url=match.group(1),creator=request.remote_addr)
-        print 'Added: '+url
-        logger.critical('Added '+url)
-    else:
-        print 'Invalid url '+url
-        logger.critical('Error! URL Invalid '+url)
+    url = ""
+    try:
+        # Remove non-printable chars
+        url = filter(lambda x: x in string.printable,request.args.get('element',0,type=str))
+        match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
+        if match:
+            print match
+            queue.add(url=match.group(1),creator=request.remote_addr)
+            print 'Added: '+url
+            logger.critical('Added '+url)
+        else:
+            print 'Invalid url '+url
+            logger.critical('Error! URL Invalid '+url)
+    except Exception,err:
+    	txt = "Couldn't add video %s. Exception: %s." % (url,str(err))
+    	print txt
+    	logger.critical(txt)
         
     return str(len(queue.queue)+1)
 

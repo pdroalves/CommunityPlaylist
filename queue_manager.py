@@ -22,6 +22,7 @@
 import sqlite3
 import time
 import logging
+import string
 from flask import _app_ctx_stack
 from youtube_handler import YoutubeHandler
 
@@ -85,6 +86,7 @@ class QueueManager:
 	def get_db(self):
 		top = _app_ctx_stack.top
 		if self.conn is None:
+			print "Starting database."
 			self.conn = self.get_db_connection()
 			cursor = self.conn.cursor()
 
@@ -112,11 +114,14 @@ class QueueManager:
 					if tag in voters_history.get(url).get("positive"):
 						voters_history.get(url).get("positive").remove(tag)					
 
-			logger.info("Votes founded: "+str(voters_history.keys()))
+			txt = "Votes founded: %d"%len(voters_history.keys())
+			print txt
+			logger.info(txt)
+			print history
 			for h in history:
 				print h
 				id = h[0]
-				url = h[1]
+				url = filter(lambda x: x in string.printable,h[1])
 				if voters_history.has_key(url):
 					positive_voters = voters_history.get(url).get("positive")
 					negative_voters = voters_history.get(url).get("negative")
@@ -143,8 +148,9 @@ class QueueManager:
 									"data":ytData.get('data')
 									})
 				except Exception,err:
+					txt ="Url: %s - Data: %s" % (url,str(data))
 					logger.critical(str(err))
-					logger.critical("Url: %s - Data: %s" % str(url,data))
+					logger.critical(txt)
 				self.commit()
 			logger.info("DB loaded:\n\t"+str(self.queue))
 		return self.conn
@@ -158,15 +164,16 @@ class QueueManager:
 			cursor.execute("INSERT INTO vote_history (url,tag,positive) VALUES(\'%s\',\'%s\',1)" % (url,str(creator)))
 			id = cursor.execute('SELECT id FROM playlist WHERE url = \''+url+'\' and removed = 0 ORDER BY id DESC LIMIT 1').fetchone()
 			data = self.yth.get_info(url)
-			if not type(data) == dict:
-				ytData = data.json()
-			else:
-				ytData = data
-			#print ytData.get("data").get("title")
-			try:
-				data = ytData.get('data')
+			if data is not None:
+				if not type(data) == dict:
+					ytData = data.json()
+				else:
+					ytData = data
+				#print ytData.get("data").get("title")
+				try:
+					data = ytData.get('data')
 
-				new_item = {
+					new_item = {
 							"id":id,
 							"url":url,
 							"added_at":int(time.time()),
@@ -177,11 +184,13 @@ class QueueManager:
 							},
 							"data":ytData.get('data')
 						}
-				self.queue.append(new_item)
-				logger.info("Item added: "+str(new_item))
-			except Exception,err:
-				logger.critical(str(err))
-				logger.critical("Url: %s - Data: %s" % str(url,data))
+					self.queue.append(new_item)
+					logger.info("Item added: "+str(new_item))
+				except Exception,err:
+					logger.critical(str(err))
+					logger.critical("Url: %s - Data: %s" % str(url,data))
+		else:
+			txt = "Couldn't add the video %s. Youtube returned null." % url
 		self.commit()
 		return new_item
 
