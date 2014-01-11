@@ -144,7 +144,7 @@ class QueueManager:
 									})
 				except Exception,err:
 					logger.critical(str(err))
-					logger.critical("Url: %s - Data: %s" % str(url,data))
+					logger.critical("Url: %s - Data: %s" % (url,str(data)))
 				self.commit()
 			logger.info("DB loaded:\n\t"+str(self.queue))
 		return self.conn
