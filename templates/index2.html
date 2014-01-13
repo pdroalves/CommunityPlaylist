@@ -72,6 +72,32 @@
 
 
     <div class="container-fluid">
+        <div class="alerts">
+          {% with messages = get_flashed_messages(category_filter=["error"]) %}
+          {% if messages %}
+          {% for message in messages %}
+          <div class="row-fluid">
+            <div class="alert alert-danger alert-dismissable">
+              <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+              <strong>{{ message }}</strong>
+            </div>
+          </div>
+         {% endfor %}
+          {% endif %}
+          {% endwith %}
+          {% with messages = get_flashed_messages(category_filter=["success"]) %}
+          {% if messages %}
+          {% for message in messages %}
+          <div class="row-fluid">
+            <div class="alert alert-success alert-dismissable">
+              <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+              <strong>{{ message }}</strong>
+            </div>
+          </div>
+         {% endfor %}
+          {% endif %}
+          {% endwith %}
+        </div>
           {% if not session.session_key %}
           <div class="row-fluid">
             <div class="queue-control">

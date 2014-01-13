@@ -63,6 +63,11 @@ nav button{
   margin-right: auto;
 }
 
+.alerts{
+  margin-left: 28%;
+  margin-right: 28%;
+}
+
 #newSongUrl{
     height: 30px;
     width: 400px;

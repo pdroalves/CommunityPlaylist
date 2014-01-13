@@ -223,20 +223,21 @@ def login():
             if session.has_key('session_key'):
                 print session.get('session_key')
                 user_data = lgk.get_user(session=session['session_key'])
-                if user_data is None:
-                    
+                if user_data is None:                    
                     session.pop('session_key',None)
                     session.pop('boss',None)
                 else:                        
                     session['session_key'] = session.get('session_key')
                     session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
+                    log_txt = "Bem vindo %s." % user_data.get('name')
+                    flash(log_txt.decode("utf-8"),"success")
         else:
             # Try to log in by normal username/password keys
             user_credentials = {
                 "username":request.form['username'],
                 "password":lgk.encrypt(request.form['password'])
                 }      
-            print user_credentials
+            logger.info("Login: %s" % str(user_credentials))
             user_data = lgk.get_user(credentials=user_credentials)
             if len(user_data) > 0 :
                 ## Try to log in user by the credentials provided
@@ -246,9 +247,15 @@ def login():
                 #session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
                 lgk.set_user_session({"fk_user":user_data[0].get('id'),"key":session_key})
                 logger.critical("Usuario logado "+user_credentials.get('username'))
+                log_txt = "Bem vindo %s." % user_data[0].get('name')
+                flash(log_txt.decode("utf-8"),"success")
             else:
+                no_log_txt = "Usuário não encontrado."
+                #flash(no_log_txt.decode("utf-8"),"error")
                 raise Exception("No login data found...")
     except Exception,err:
+        no_log_txt = "Usuário não encontrado."
+        flash(no_log_txt.decode("utf-8"),"error")
         msg = "Erro ao logar: " + str(err)
         print msg
         logger.critical(msg)
@@ -448,5 +455,5 @@ def register_vote():
 if __name__ == '__main__':
     print "Starting Community Playlist"
     app.secret_key = get_app_secret_key()
-    app.run(debug=False,host='0.0.0.0')
-    #app.run(debug=True)
+    #app.run(debug=False,host='0.0.0.0')
+    app.run(debug=True)
