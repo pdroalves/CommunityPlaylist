@@ -401,7 +401,7 @@ def add_url():
     url = ""
     try:
         # Remove non-printable chars
-        url = filter(lambda x: x in string.printable,request.args.get('element',0,type=str))
+        url = filter(lambda x: x in string.printable,request.args.get('element'))
         match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
         if match:
             print match
