@@ -158,6 +158,7 @@ class QueueManager:
 	def add(self,url,creator):
 		cursor = self.get_db().cursor()
 		new_item = None
+		done = False
 		if not [element for element in self.queue if element['url'] == url]:
 			cursor.execute("INSERT INTO playlist (url) VALUES(\'%s\')" % url)
 			print creator
@@ -186,13 +187,14 @@ class QueueManager:
 						}
 					self.queue.append(new_item)
 					logger.info("Item added: "+str(new_item))
+					done = True
 				except Exception,err:
 					logger.critical(str(err))
 					logger.critical("Url: %s - Data: %s" % str(url,data))
 		else:
 			txt = "Couldn't add the video %s. Youtube returned null." % url
 		self.commit()
-		return new_item
+		return new_item,done
 
 	def rm(self,url):
 		cursor = self.get_db().cursor()

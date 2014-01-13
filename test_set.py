@@ -50,26 +50,38 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test_next_video(self):
         print "Test 5"
+        count = 0
+        added = []
 
-        self.queue.add(url="tGiEsjtfJdg",creator="127.0.0.1")
-        self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
-        self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
-        self.queue.add(url="vw3-dijOCK0",creator="127.0.0.1")
+        new_item,done = self.queue.add(url="tGiEsjtfJdg",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("tGiEsjtfJdg")
+        new_item,done = self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("XFwVfrAURDg")
+        new_item,done = self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("EfuVcRdamCY")
+        new_item,done = self.queue.add(url="vw3-dijOCK0",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("vw3-dijOCK0")
         
-        self.assertEqual(len(self.queue.getQueue()),4)
-        self.assertEqual(self.queue.next(),"tGiEsjtfJdg")
-        self.assertEqual(len(self.queue.getQueue()),3)
-        self.assertEqual(self.queue.next(),"XFwVfrAURDg")
-        self.assertEqual(len(self.queue.getQueue()),2)
-        self.assertEqual(self.queue.next(),"EfuVcRdamCY")
-        self.assertEqual(len(self.queue.getQueue()),1)
-        self.assertEqual(self.queue.next(),"vw3-dijOCK0")
+        iterator = 0
+        for index,item in enumerate(added):
+            self.assertEqual(len(self.queue.getQueue()),count-index)
+            self.assertEqual(self.queue.next(),added[index])
+
         self.assertEqual(len(self.queue.getQueue()),0)
-        self.assertIsNone(self.queue.next())
-        self.assertEqual(len(self.queue.getQueue()),0)
+        self.assertEqual(self.queue.next(),None)
 
     def test_votes(self):
         print "Test 6"
+        added = []
+        count = 0
 
         # Asserts that it cant register a vote to something that isn't there
         self.assertFalse(self.queue.register_vote(url="dummy",
@@ -78,7 +90,10 @@ class TestSequenceFunctions(unittest.TestCase):
                             creator="127.0.0.1"))
 
         # Asserts votes for queues of a single item 
-        self.queue.add(url="tGiEsjtfJdg",creator="127.0.0.1")
+        new_item,done = self.queue.add(url="tGiEsjtfJdg",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("tGiEsjtfJdg")
 
         elements = self.queue.getQueue()
         for element in elements:
@@ -100,9 +115,18 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(element.get("negative"),0)
 
         # Asserts votes for bigger queues
-        self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
-        self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
-        self.queue.add(url="vw3-dijOCK0",creator="127.0.0.1")
+        new_item,done = self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("XFwVfrAURDg")
+        new_item,done = self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("EfuVcRdamCY")
+        new_item,done = self.queue.add(url="vw3-dijOCK0",creator="127.0.0.1")
+        if done:
+            count += 1
+            added.append("vw3-dijOCK0")
 
         self.assertIsNotNone(self.queue.register_vote(url="tGiEsjtfJdg",
                             positive=0,
@@ -122,7 +146,7 @@ class TestSequenceFunctions(unittest.TestCase):
                             creator="127.0.0.2"))
 
         elements = self.queue.getQueue()
-        self.assertEqual(len(elements),4)
+        self.assertEqual(len(elements),count)
         
         for element in elements:
             if  element.get("url") == "tGiEsjtfJdg":
