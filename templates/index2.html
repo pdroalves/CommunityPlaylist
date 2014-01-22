@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" type="text/css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}" type="text/css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}"  type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='autocomplete.css') }}"  type="text/css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='jquery-ui-1.10.4.custom.min.css') }}"  type="text/css" />
   </head>
 
   <body>
@@ -55,11 +57,11 @@
               {% if session.session_key %}
                 <div id="player-controls">
                   <button type="submit" class="control" id="revert">
-                    <img src="{{ url_for('static', filename='previous.png')}}" alt="Revert"></button>
+                    <img src="{{ url_for('static', filename='images/previous.png')}}" alt="Revert"></button>
                   <button type="submit" class="control" id="startPL">
-                    <img src="{{ url_for('static', filename='play.png')}}" alt="Play"></button>
+                    <img src="{{ url_for('static', filename='images/play.png')}}" alt="Play"></button>
                   <button type="submit" class="control" id="next">
-                    <img src="{{ url_for('static', filename='next.png')}}" alt="Next">
+                    <img src="{{ url_for('static', filename='images/next.png')}}" alt="Next">
                   </button>
                 </div>
               {% endif %}                                   
@@ -101,8 +103,10 @@
           {% if not session.session_key %}
           <div class="row-fluid">
             <div class="queue-control">
-                <input id="newSongUrl" type="text" />
-                <input id="addNewSong" type="submit" value="Add"/>
+                <input id="newSongUrl" type="text">
+                <button id="addNewSong" type="button" class="btn btn-default" data-toggle="button">
+                  Add
+                </button>
             </div>
           </div>
           {% endif %}
@@ -112,7 +116,7 @@
           {% endif %}
 
             <div id="queue-list" style="overflow:auto;">
-              <table id="show-items" cellpadding="0" cellspacing="0" border="0" class="table  table-hover table-condensed" >
+              <table id="show-items" cellpadding="0" cellspacing="0" border="0" class="table  table-hover table-condensed table-striped" >
               </table>
 
               {% if session.session_key %}
@@ -130,8 +134,10 @@
             <div id="player" align="center"></div>
             
             <div class="queue-control">
-              <input id="newSongUrl" type="text" />
-              <input id="addNewSong" type="submit" value="Add"/>
+              <input id="newSongUrl" type"=text" >
+                <button id="addNewSong" type="button" class="btn btn-default" data-toggle="button">
+                  Add
+                </button>
             </div>
             <br>
             <div id="player-vinheta">
@@ -153,21 +159,21 @@
                   <input type="file" class="control" id="input_vinheta3" accept="audio/*" style="display:none" onchange="javascript:set_vinheta3(this.files)"/>
 
                   <a href="javascript:get_vinheta1()">
-                      <img src="{{ url_for('static', filename='vinheta.png')}}" alt="Vinheta1">
+                      <img src="{{ url_for('static', filename='images/vinheta.png')}}" alt="Vinheta1">
                   </a>
                     <a href="javascript:play_vinheta1()">
                       <span class="vinheta_txt" id="txt_vinheta1">Empty</span>
                     </a>
                     <br>
                   <a href="javascript:get_vinheta2()">
-                      <img src="{{ url_for('static', filename='vinheta.png')}}" alt="Vinheta2">
+                      <img src="{{ url_for('static', filename='images/vinheta.png')}}" alt="Vinheta2">
                   </a>
                     <a href="javascript:play_vinheta2()">
                       <span class="vinheta_txt" id="txt_vinheta2">Empty</span>
                     </a>
                     <br>
                   <a href="javascript:get_vinheta3()">
-                      <img src="{{ url_for('static', filename='vinheta.png')}}" alt="Vinheta3">
+                      <img src="{{ url_for('static', filename='images/vinheta.png')}}" alt="Vinheta3">
                   </a>
                     <a href="javascript:play_vinheta3()"> 
                       <span class="vinheta_txt" id="txt_vinheta3">Empty</span>
@@ -179,12 +185,16 @@
       </div>
     </div>
 
-    <script src="js/jquery-1.10.2.min.js"></script>
-    <script src="js/jquery-ui-1.8.7.custom.min.js"></script>
-    <script src="js/jquery.inlineedit.js"></script>
+    <script src="js/jquery-1.9.1.js"></script>
+    <script src="js/jquery.ui.core.js"></script>
+    <script src="js/jquery.ui.widget.js"></script>
+    <script src="js/jquery.ui.position.js"></script>
+    <script src="js/jquery.ui.menu.js"></script>
+    <script src="js/jquery.ui.autocomplete.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/pubsub.js"></script>
     <script src="js/base.js"></script>
+    <script src="js/autocomplete.js"></script>
     <script src="js/youtube.js"></script>
   </body>
 </html>

@@ -110,15 +110,15 @@ function onPlayerStateChange(evt) {
 
     if (evt.data == YT.PlayerState.ENDED) {
         playNextVideo();
-        $('#startPL img').attr("src","{{ url_for('static', filename='play.png')}}");
+        $('#startPL img').attr("src","{{ url_for('static', filename='images/play.png')}}");
         $("#startPL img").attr("state","paused");
     }else{
         if(evt.data == YT.PlayerState.PLAYING){
-            $('#startPL img').attr("src","{{ url_for('static', filename='pause.png')}}");
+            $('#startPL img').attr("src","{{ url_for('static', filename='images/pause.png')}}");
             $("#startPL img").attr("state","playing");
         }
         if(evt.data == YT.PlayerState.PAUSED){
-            $('#startPL img').attr("src","{{ url_for('static', filename='play.png')}}");
+            $('#startPL img').attr("src","{{ url_for('static', filename='images/play.png')}}");
             $("#startPL img").attr("state","paused");
         }
 

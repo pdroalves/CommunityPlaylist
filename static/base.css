@@ -1,6 +1,6 @@
 body{
   background: #E8DFC2;
-  background-image: url('/static/background.jpg');
+  background-image: url('/static/images/background.jpg');
   background-repeat: no-repeat;
   background-position:50% 5%;
   background-attachment:fixed;
@@ -37,7 +37,6 @@ nav button{
 }
 
 #show-items{	
-    cursor: move;
     background-color: #E6E6E6;
 }
 
@@ -105,3 +104,4 @@ span{
   font-family:"Times New Roman", Times, serif;
   font-size:15px;  
 }
+
