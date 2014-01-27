@@ -381,18 +381,20 @@ def clear_all():
         if session.has_key('session_key'):
             user = lgk.get_user(session=session['session_key'])[0]
         if user is None:
+            logger.critical("Usuario sem permissões para setar o now playing")
+            session.pop('session_key',None)
             raise Exception("No sufficient privileges for this operation.")
         if user.get('privileges') in permissions.get('clear-all'):
             logger.critical('Clearing queue')
+            #flash("Clearing queue...","warning")
             queue.clear()
+            flash("Done","success")
         else:
             raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
         logger.critical(err)
-        logger.critical("Usuario sem permissões para setar o now playing")
-        
-        session.pop('session_key',None)
+        flash("Couldn't clear the queue.","error")
     return render_template('index2.html')
 
 @app.route('/_add_url',methods=['POST','GET'])
@@ -455,5 +457,5 @@ def register_vote():
 if __name__ == '__main__':
     print "Starting Community Playlist"
     app.secret_key = get_app_secret_key()
-    app.run(debug=False,host='0.0.0.0')
-    #app.run(debug=True)
+    #app.run(debug=False,host='0.0.0.0')
+    app.run(debug=True)

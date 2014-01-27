@@ -88,6 +88,7 @@ class QueueManager:
 		if self.conn is None:
 			print "Starting database."
 			self.conn = self.get_db_connection()
+			self.conn.isolation_level = None
 			cursor = self.conn.cursor()
 
 			cursor.execute('CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY,url TEXT,played INTEGER DEFAULT 0,removed INTEGER DEFAULT 0)')
@@ -129,7 +130,9 @@ class QueueManager:
 					logger.info("No votes for "+str(url))
 					positive_voters = []
 					negative_voters = []
-				data = self.yth.get_info(url)
+
+				# The need to receive data from Youtube makes this step slow
+				data = self.yth.get_info(url) 
 				try:
 					if type(data) is not dict:
 						ytData = data.json()
@@ -175,7 +178,7 @@ class QueueManager:
 					data = ytData.get('data')
 
 					new_item = {
-							"id":id,
+							"id":id[0],
 							"url":url,
 							"added_at":int(time.time()),
 							"playtime":self.calc_full_playtime(),
@@ -197,6 +200,8 @@ class QueueManager:
 		return new_item,done
 
 	def rm(self,url):
+		assert type(url) == str
+		logger.info("Clearing element "+url)
 		cursor = self.get_db().cursor()
 		candidates = [item for item in self.queue if item.get('url') == url]
 		if len(candidates) > 0:
@@ -204,7 +209,7 @@ class QueueManager:
 			self.queue.remove(element)
 			cursor.execute('UPDATE playlist SET removed = 1 WHERE id = \''+str(element.get("id"))+'\'')
 			self.commit()
-			logger.info("Item removed: "+str(element))
+			logger.info("Item removed: "+str(element))	
 		return
 
 	def next(self):
@@ -295,7 +300,7 @@ class QueueManager:
 				self.queue.append(element)
 
 	def getQueue(self):
-		self.get_db()
+		self.get_db() # Just asserts that there is something inside the db
 		fila = []
 		if len(self.queue) > 0:
 			fila += [{
@@ -308,11 +313,20 @@ class QueueManager:
 		return fila
 
 	def clear(self):
-		cursor = self.get_db().cursor()
-		while len(self.queue) > 0:
-			for element in self.queue:
-				print 'Clear: '+str(element)
-				self.rm(element.get('url'))
+		logger.info("Clearing list")
+		print "Clearing list"
+		
+		db = self.get_db()# Just asserts that there is something inside the db
+		cursor = db.cursor()
+		cursor.execute("BEGIN")
+		ids = [str(element.get('id')) for element in self.queue]
+		print ids
+		query = 'UPDATE playlist SET removed = 1 WHERE id in ('+','.join(ids)+')'
+		cursor.execute(query)
+		
+		self.queue = list()
+		logger.info("Item removed: "+str(element))
+		cursor.execute("COMMIT")
 		logger.info("Queue cleared...")
 		return
 
