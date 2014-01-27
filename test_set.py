@@ -22,7 +22,7 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test_db_connection(self):
         print "Test 1"
-        self.assertIsNotNone(self.queue.get_db_connection())
+        self.assertIsNotNone(self.queue.get_db())
 
     def test_check_initial_emptiness(self):
         print "Test 2"
@@ -54,7 +54,7 @@ class TestSequenceFunctions(unittest.TestCase):
         self.queue.add(url="tGiEsjtfJdg",creator="127.0.0.1")
         self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
         self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
-        self.queue.add(url="vw3-dijOCK0",creator="127.0.0.1")
+        self.queue.add(url="4pRPAbCwgSs",creator="127.0.0.1")
         
         self.assertEqual(len(self.queue.getQueue()),4)
         self.assertEqual(self.queue.next(),"tGiEsjtfJdg")
@@ -63,7 +63,7 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(len(self.queue.getQueue()),2)
         self.assertEqual(self.queue.next(),"EfuVcRdamCY")
         self.assertEqual(len(self.queue.getQueue()),1)
-        self.assertEqual(self.queue.next(),"vw3-dijOCK0")
+        self.assertEqual(self.queue.next(),"4pRPAbCwgSs")
         self.assertEqual(len(self.queue.getQueue()),0)
         self.assertIsNone(self.queue.next())
         self.assertEqual(len(self.queue.getQueue()),0)
@@ -102,7 +102,7 @@ class TestSequenceFunctions(unittest.TestCase):
         # Asserts votes for bigger queues
         self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
         self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
-        self.queue.add(url="vw3-dijOCK0",creator="127.0.0.1")
+        self.queue.add(url="4pRPAbCwgSs",creator="127.0.0.1")
 
         self.assertIsNotNone(self.queue.register_vote(url="tGiEsjtfJdg",
                             positive=0,
@@ -116,7 +116,7 @@ class TestSequenceFunctions(unittest.TestCase):
                             positive=1,
                             negative=0,
                             creator="127.0.0.2"))
-        self.assertIsNotNone(self.queue.register_vote(url="vw3-dijOCK0",
+        self.assertIsNotNone(self.queue.register_vote(url="4pRPAbCwgSs",
                             positive=1,
                             negative=0,
                             creator="127.0.0.2"))
@@ -134,7 +134,7 @@ class TestSequenceFunctions(unittest.TestCase):
             elif  element.get("url") == "tGiEsjtfJdg":
                 self.assertEqual(element.get("positive"),2)
                 self.assertEqual(element.get("negative"),0)
-            elif  element.get("url") == "vw3-dijOCK0":
+            elif  element.get("url") == "4pRPAbCwgSs":
                 self.assertEqual(element.get("positive"),2)
                 self.assertEqual(element.get("negative"),0)
 

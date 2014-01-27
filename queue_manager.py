@@ -24,15 +24,15 @@ import time
 import logging
 from flask import _app_ctx_stack
 from youtube_handler import YoutubeHandler
+from database_manager import DatabaseManager
 
-db = None
 
 logger = logging.getLogger("QueueManager")
 
 class QueueManager:
 	def __init__(self,database='database.db'):
 		self.queue = []
-		self.db_file = database
+		self.db_manager = DatabaseManager(database=database)
 		self.conn = None
 		#self.sync()
 		self.yth = YoutubeHandler()
@@ -74,22 +74,13 @@ class QueueManager:
 		else:
 			return 0
 
-	def get_db_connection(self):
-		return sqlite3.connect(self.db_file)
-
-	def commit(self):
-		self.get_db().commit()
-		logger.info("Commit")
-		return
 
 	def get_db(self):
 		top = _app_ctx_stack.top
 		if self.conn is None:
-			self.conn = self.get_db_connection()
+			self.conn = self.db_manager.get_db()
 			cursor = self.conn.cursor()
 
-			cursor.execute('CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY,url TEXT,played INTEGER DEFAULT 0,removed INTEGER DEFAULT 0)')
-			cursor.execute('CREATE TABLE IF NOT EXISTS vote_history (id INTEGER PRIMARY KEY,url INTEGER NOT NULL,tag TEXT NOT NULL,positive INTEGER DEFAULT 0,negative INTEGER DEFAULT 0)')
 			history = cursor.execute('SELECT id,playlist.url FROM playlist WHERE played = 0 and removed = 0  ORDER BY id ASC').fetchall()
 			voters_history = {}
 			voters = cursor.execute("SELECT vh.url,tag,positive,negative FROM vote_history vh INNER JOIN (SELECT MAX(id) id FROM vote_history GROUP BY url,tag) max_vh ON max_vh.id = vh.id INNER JOIN playlist p ON p.url = vh.url WHERE played = 0 and removed = 0").fetchall()		
@@ -145,12 +136,13 @@ class QueueManager:
 				except Exception,err:
 					logger.critical(str(err))
 					logger.critical("Url: %s - Data: %s" % (url,str(data)))
-				self.commit()
+				self.conn.commit()
 			logger.info("DB loaded:\n\t"+str(self.queue))
 		return self.conn
 
 	def add(self,url,creator):
-		cursor = self.get_db().cursor()
+		db = self.get_db()
+		cursor = db.cursor()
 		new_item = None
 		if not [element for element in self.queue if element['url'] == url]:
 			cursor.execute("INSERT INTO playlist (url) VALUES(\'%s\')" % url)
@@ -158,31 +150,34 @@ class QueueManager:
 			cursor.execute("INSERT INTO vote_history (url,tag,positive) VALUES(\'%s\',\'%s\',1)" % (url,str(creator)))
 			id = cursor.execute('SELECT id FROM playlist WHERE url = \''+url+'\' and removed = 0 ORDER BY id DESC LIMIT 1').fetchone()
 			data = self.yth.get_info(url)
-			if not type(data) == dict:
-				ytData = data.json()
-			else:
-				ytData = data
-			#print ytData.get("data").get("title")
-			try:
-				data = ytData.get('data')
+			if data is not None:
+				if not type(data) == dict:
+					ytData = data.json()
+				else:
+					ytData = data
+				#print ytData.get("data").get("title")
+				try:
+					data = ytData.get('data')
 
-				new_item = {
-							"id":id,
-							"url":url,
-							"added_at":int(time.time()),
-							"playtime":self.calc_full_playtime(),
-							"voters":{
-								"positive":[creator],
-								"negative":[]
-							},
-							"data":ytData.get('data')
-						}
-				self.queue.append(new_item)
-				logger.info("Item added: "+str(new_item))
-			except Exception,err:
-				logger.critical(str(err))
-				logger.critical("Url: %s - Data: %s" % str(url,data))
-		self.commit()
+					new_item = {
+								"id":id,
+								"url":url,
+								"added_at":int(time.time()),
+								"playtime":self.calc_full_playtime(),
+								"voters":{
+									"positive":[creator],
+									"negative":[]
+								},
+								"data":ytData.get('data')
+							}
+					self.queue.append(new_item)
+					logger.info("Item added: "+str(new_item))
+				except Exception,err:
+					logger.critical(str(err))
+					logger.critical("Url: %s - Data: %s" % str(url,data))
+			else:
+				logger.critical("Couldn't add item %s"%url)
+		db.commit()
 		return new_item
 
 	def rm(self,url):
@@ -197,12 +192,13 @@ class QueueManager:
 		return
 
 	def next(self):
-		cursor = self.get_db().cursor()
+		db = self.get_db()
+		cursor = db.cursor()
 		if(len(self.queue) > 0):
 			next_element = self.queue[0]
 			self.queue.remove(next_element)
 			cursor.execute('UPDATE playlist SET played = 1 WHERE id = \''+str(next_element.get("id"))+'\'')
-			self.commit()
+			db.commit()
 			print "Tocando "+next_element.get("url")
 			logger.info("Next song: "+str(next_element.get("url")))
 			url = next_element.get("url")
