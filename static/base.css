@@ -117,9 +117,6 @@ span{
   background-color:rgba(238,233,233,0.8);
 }
 
-#bg p{
-  font-size: 19px;
-}
 
 #controls p{
   font-family:"Times New Roman", Times, serif;
@@ -128,7 +125,7 @@ span{
 
 
 #background-chooser{
-  max-width: 120px;
+  max-width: 240px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

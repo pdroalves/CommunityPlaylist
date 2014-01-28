@@ -477,6 +477,8 @@ def register_vote():
 def get_backgrounds():
     global backgrounds_directory
     backgrounds = os.listdir(backgrounds_directory)
+    if backgrounds is not None:
+        backgrounds.sort()
     return backgrounds
 
 @app.route("/_set_background",methods=['GET','POST'])
