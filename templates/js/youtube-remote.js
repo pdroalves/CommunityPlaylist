@@ -7,9 +7,9 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 var player;
-var default_start_video = 'dQw4w9WgXcQ'
-var default_next_video = 'F0BfcdPKw8E'
-var song_playing = default_start_video
+//var default_start_video = 'dQw4w9WgXcQ'
+//var default_next_video = 'F0BfcdPKw8E'
+var song_playing = ''
 var current_time = 0
 var maxDelay = 5.0
 
@@ -18,7 +18,7 @@ function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
       height: '100%',
       width: '100%',
-      videoId: default_start_video,      
+      //videoId: default_start_video,      
       events: {
         'onReady': onPlayerReady
       }

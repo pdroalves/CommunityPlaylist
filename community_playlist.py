@@ -238,20 +238,21 @@ def login():
             if session.has_key('session_key'):
                 print session.get('session_key')
                 user_data = lgk.get_user(session=session['session_key'])
-                if user_data is None:
-                    
+                if user_data is None:                    
                     session.pop('session_key',None)
                     session.pop('boss',None)
                 else:                        
                     session['session_key'] = session.get('session_key')
                     session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
+                    log_txt = "Bem vindo %s." % user_data.get('name')
+                    flash(log_txt.decode("utf-8"),"success")
         else:
             # Try to log in by normal username/password keys
             user_credentials = {
                 "username":request.form['username'],
                 "password":lgk.encrypt(request.form['password'])
                 }      
-            print user_credentials
+            logger.info("Login: %s" % str(user_credentials))
             user_data = lgk.get_user(credentials=user_credentials)
             if len(user_data) > 0 :
                 ## Try to log in user by the credentials provided
@@ -261,9 +262,15 @@ def login():
                 #session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
                 lgk.set_user_session({"fk_user":user_data[0].get('id'),"key":session_key})
                 logger.critical("Usuario logado "+user_credentials.get('username'))
+                log_txt = "Bem vindo %s." % user_data[0].get('name')
+                flash(log_txt.decode("utf-8"),"success")
             else:
+                no_log_txt = "Usuário não encontrado."
+                #flash(no_log_txt.decode("utf-8"),"error")
                 raise Exception("No login data found...")
     except Exception,err:
+        no_log_txt = "Usuário não encontrado."
+        flash(no_log_txt.decode("utf-8"),"error")
         msg = "Erro ao logar: " + str(err)
         print msg
         logger.critical(msg)
@@ -394,32 +401,42 @@ def clear_all():
         if session.has_key('session_key'):
             user = lgk.get_user(session=session['session_key'])[0]
         if user is None:
+            logger.critical("Usuario sem permissões para setar o now playing")
+            session.pop('session_key',None)
             raise Exception("No sufficient privileges for this operation.")
         if user.get('privileges') in permissions.get('clear-all'):
             logger.critical('Clearing queue')
+            #flash("Clearing queue...","warning")
             queue.clear()
+            flash("Done","success")
         else:
             raise Exception("No sufficient privileges for this operation.")
             return logout()
     except Exception,err:
         logger.critical(err)
-        logger.critical("Usuario sem permissões para setar o now playing")
-        
-        session.pop('session_key',None)
-    return redirect(url_for('main'))
+        flash("Couldn't clear the queue.","error")
+    return render_template('index2.html')
 
 @app.route('/_add_url',methods=['POST','GET'])
 def add_url():
     global queue
-    url = request.args.get('element',0,type=str)
-    match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
-    if match:
-        queue.add(url=match.group(1),creator=request.remote_addr)
-        print 'Added: '+url
-        logger.critical('Added '+url)
-    else:
-        print 'Invalid url '+url
-        logger.critical('Error! URL Invalid '+url)
+    url = ""
+    try:
+        # Remove non-printable chars
+        url = filter(lambda x: x in string.printable,request.args.get('element'))
+        match = re.search('.*[w][a][t][c][h].[v][=]([^/,&]*)',url)
+        if match:
+            print match
+            queue.add(url=match.group(1),creator=request.remote_addr)
+            print 'Added: '+url
+            logger.critical('Added '+url)
+        else:
+            print 'Invalid url '+url
+            logger.critical('Error! URL Invalid '+url)
+    except Exception,err:
+    	txt = "Couldn't add video %s. Exception: %s." % (url,str(err))
+    	print txt
+    	logger.critical(txt)
         
     return str(len(queue.queue)+1)
 

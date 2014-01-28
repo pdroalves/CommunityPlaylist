@@ -68,7 +68,7 @@ var update_status_function = function(){
             }else if(status.now_playing == 2){
                 $("span.now_playing").html('Now paused: <b>'+status.song_playing+'</b>')
             }else{
-                $("span.now_playing").html('<b>Not playing...</b>')
+                $("span.now_playing").html('<b>Not playing =(</b>')
             }
 	   }catch(err){
 		console.log("Exception! "+String(err));
@@ -114,7 +114,7 @@ var get_video_container = function(id,title,duration,vpositive,vnegative){
             +"<td>"
                 +"<div  class='vote'>"
                     +"<a >"
-                        +"<img src={{ url_for('static', filename='like.png')}} alt='Next' id='like' />"
+                        +"<img src={{ url_for('static', filename='images/like.png')}} alt='Next' id='like' />"
                     +"</a>"
                     +"<span class='votepos'>"+vpositive+"</span>"
                 +"</div>"
@@ -245,12 +245,21 @@ $("#upd").click(function(){
             update_function();
         });
 
+function addSong(){
+    var button = $("#newSongUrl")
+    console.log(button.val());
+    add_function(button.val());
+  //  update_function();
+    button.val("");
+};
+
+$("#newSongUrl").keypress(function(e){
+    if(e.which == 10 || e.which == 13) {
+        addSong();
+    }
+});
 $("#addNewSong").click(function(){
-        var button = document.getElementById("newSongUrl");
-        console.log(button.value);
-        add_function(button.value);
-      //  update_function();
-        button.value = "";
+        addSong();
     });
 
 // Votes
@@ -318,49 +327,49 @@ function youtubeFeedCallback(data) {
 ///////////////////////
 $('#startPL').bind('mouseover',function(e){
     if($("#startPL img").attr("state") == "playing"){
-        $('#startPL img').attr("src","{{ url_for('static', filename='pause_mouse_over.png')}}");
+        $('#startPL img').attr("src","{{ url_for('static', filename='images/pause_mouse_over.png')}}");
     }else{
         if($("#startPL img").attr("state") == "paused"){
-            $('#startPL img').attr("src","{{ url_for('static', filename='play_mouse_over.png')}}");
+            $('#startPL img').attr("src","{{ url_for('static', filename='images/play_mouse_over.png')}}");
         }
     }
 });
 
 $('#startPL').bind('mouseleave',function(e){
     if($("#startPL img").attr("state") == "playing"){
-        $('#startPL img').attr("src","{{ url_for('static', filename='pause.png')}}");
+        $('#startPL img').attr("src","{{ url_for('static', filename='images/pause.png')}}");
     }else{
         if($("#startPL img").attr("state") == "paused"){
-            $('#startPL img').attr("src","{{ url_for('static', filename='play.png')}}");
+            $('#startPL img').attr("src","{{ url_for('static', filename='images/play.png')}}");
         }
     }
 });
 
 $('#startPL').bind('click',function(e){
     if($("#startPL img").attr("state") == "paused"){
-        $('#startPL img').attr("src","{{ url_for('static', filename='pause_mouse_over.png')}}");
+        $('#startPL img').attr("src","{{ url_for('static', filename='images/pause_mouse_over.png')}}");
     }else{
         if($("#startPL img").attr("state") == "playing"){
-            $('#startPL img').attr("src","{{ url_for('static', filename='play_mouse_over.png')}}");
+            $('#startPL img').attr("src","{{ url_for('static', filename='images/play_mouse_over.png')}}");
         }
     }
 });
 
 
 $('#next').bind('mouseover',function(e){
-    $('#next img').attr("src","{{ url_for('static', filename='next_mouse_over.png')}}");
+    $('#next img').attr("src","{{ url_for('static', filename='images/next_mouse_over.png')}}");
 });
 
 $('#next').bind('mouseleave',function(e){
-    $('#next img').attr("src","{{ url_for('static', filename='next.png')}}");
+    $('#next img').attr("src","{{ url_for('static', filename='images/next.png')}}");
 });
 
 $('#revert').bind('mouseover',function(e){
-    $('#revert img').attr("src","{{ url_for('static', filename='previous_mouse_over.png')}}");
+    $('#revert img').attr("src","{{ url_for('static', filename='images/previous_mouse_over.png')}}");
 });
 
 $('#revert').bind('mouseleave',function(e){
-    $('#revert img').attr("src","{{ url_for('static', filename='previous.png')}}");
+    $('#revert img').attr("src","{{ url_for('static', filename='images/previous.png')}}");
 });
 
 function set_vinheta1(files){

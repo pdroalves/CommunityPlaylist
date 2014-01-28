@@ -38,7 +38,6 @@ nav button{
 }
 
 #show-items{	
-  cursor: move;
   background-color: #E6E6E6;
 }
 
@@ -62,6 +61,11 @@ nav button{
 .queue-control{
   margin-left: auto;
   margin-right: auto;
+}
+
+.alerts{
+  margin-left: 28%;
+  margin-right: 28%;
 }
 
 #newSongUrl{

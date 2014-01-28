@@ -55,7 +55,9 @@ class TestSequenceFunctions(unittest.TestCase):
         self.queue.add(url="XFwVfrAURDg",creator="127.0.0.1")
         self.queue.add(url="EfuVcRdamCY",creator="127.0.0.1")
         self.queue.add(url="4pRPAbCwgSs",creator="127.0.0.1")
-        
+        count = 0
+        added = []
+
         self.assertEqual(len(self.queue.getQueue()),4)
         self.assertEqual(self.queue.next(),"tGiEsjtfJdg")
         self.assertEqual(len(self.queue.getQueue()),3)
@@ -66,10 +68,12 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(self.queue.next(),"4pRPAbCwgSs")
         self.assertEqual(len(self.queue.getQueue()),0)
         self.assertIsNone(self.queue.next())
-        self.assertEqual(len(self.queue.getQueue()),0)
+
 
     def test_votes(self):
         print "Test 6"
+        added = []
+        count = 0
 
         # Asserts that it cant register a vote to something that isn't there
         self.assertFalse(self.queue.register_vote(url="dummy",
@@ -79,7 +83,6 @@ class TestSequenceFunctions(unittest.TestCase):
 
         # Asserts votes for queues of a single item 
         self.queue.add(url="tGiEsjtfJdg",creator="127.0.0.1")
-
         elements = self.queue.getQueue()
         for element in elements:
             self.assertIsNotNone(element)
