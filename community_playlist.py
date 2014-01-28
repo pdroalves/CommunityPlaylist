@@ -27,6 +27,7 @@ import binascii
 import string
 import sqlite3
 import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(name)s - %(levelname)s:%(message)s')
+import atexit
 from time import time
 from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, _app_ctx_stack,jsonify
@@ -34,9 +35,14 @@ from youtube_handler import YoutubeHandler
 
 logger = logging.getLogger("Main")
 # configuration
-default_settings = """{"title":"Community Playlist","standardStartVideoId":"dQw4w9WgXcQ","standardEndVideoId":"F0BfcdPKw8E"}"""
+settings_path = "settings.json"
+default_settings = """{"title":"Community Playlist",
+                        "standardStartVideoId":"dQw4w9WgXcQ",
+                        "standardEndVideoId":"F0BfcdPKw8E",
+                        "backgrounds_path":"static/backgrounds",
+                        "background":"realidade_aumentada.jpg"}"""
 try:
-	with open("settings.json") as f:
+	with open(settings_path) as f:
 		settings = json.load(f)
 except Exception,err:
 	logger.critical("Couldn't find settings file. Loading default settings.")
@@ -51,6 +57,9 @@ now_playing = 0
 current_time = 0
 song_id = ''
 default_key = 'chave'
+backgrounds_directory = settings["backgrounds_path"]
+background_mask = "/static/background"
+current_background = settings["background"]
 
 standardStartVideoId = settings["standardStartVideoId"]
 standardEndVideoId = settings["standardEndVideoId"]
@@ -63,7 +72,8 @@ permissions = {
     "next":[privileges_map.get('boss')],
     "clear-all":[privileges_map.get('boss')],
     "add":[privileges_map.get('boss')],
-    "rm":[privileges_map.get('boss')]
+    "rm":[privileges_map.get('boss')],
+    "chbg":[privileges_map.get('boss')]
 }
 
 app = Flask(__name__)
@@ -74,6 +84,7 @@ queue = QueueManager()
 queue.set_pause(True)
 yth = YoutubeHandler()
 
+#atexit.register(exit)
 
 class LoginGatekeeper:
     def __init__(self,path="database.db"):
@@ -198,18 +209,22 @@ def utility_processor():
             )
 
 @app.route('/')
-def show_entries():
-    return render_template('index2.html')
+def main():
+    backgrounds = get_backgrounds()
+    return render_template('index.html',backgrounds=backgrounds,current_background=current_background)
 
 @app.route('/js')
 @app.route('/js/<name>')
 def jsfiles(name):
     return render_template('/js/'+name)
 
-
 @app.route('/player',methods=['GET','POST'])
 def player():
     return render_template('player.html')
+
+@app.route(background_mask,methods=['GET'])
+def background():
+    return redirect(get_background())
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -255,7 +270,7 @@ def login():
         
         session.pop('session_key',None)
 
-    return render_template('index2.html')
+    return redirect(url_for('main'))
 
 @app.route('/logout',methods=['GET','POST'])
 def logout():
@@ -270,7 +285,7 @@ def logout():
         print "Erro ao deslogar"
         logger.critical("Erro ao deslogar: "+str(err))
 
-    return render_template('index2.html')
+    return redirect(url_for('main'))
 
 @app.route('/_next',methods=['POST','GET'])
 def next():
@@ -299,7 +314,7 @@ def next():
         logger.critical("Usuario sem permissões para tocar videos")
         
         session.pop('session_key',None)
-        return render_template('index2.html')
+        return redirect(url_for('main'))
     return 'Ok'
 
 @app.route('/_set_playing',methods=['GET','POST'])
@@ -337,7 +352,7 @@ def set_playing():
         logger.critical("Usuario sem permissões para setar o now playing")
         
         session.pop('session_key',None)
-        return render_template('index2.html')
+        return redirect(url_for('main'))
     return 'Ok'
 
 @app.route('/_get_playing',methods=['GET'])
@@ -362,7 +377,12 @@ def get_playing():
 def update():
     global queue
     queue.sort()
-    return json.dumps({"queue":queue.getQueue()})
+    return json.dumps(
+                {"queue":queue.getQueue(),
+                "current_background":get_background(),
+                "backgrounds_directory":backgrounds_directory
+                }
+            )
 
 @app.route('/_clear-all',methods=['POST','GET'])
 def clear_all():
@@ -386,7 +406,7 @@ def clear_all():
         logger.critical("Usuario sem permissões para setar o now playing")
         
         session.pop('session_key',None)
-    return render_template('index2.html')
+    return redirect(url_for('main'))
 
 @app.route('/_add_url',methods=['POST','GET'])
 def add_url():
@@ -427,7 +447,7 @@ def rm_url():
         logger.critical(err)
         logger.critical("Usuario sem permissões para remover item")
         session.pop('key',None)
-        return render_template('index2.html')
+        return redirect(url_for('main'))
     return 'Ok'
 
 @app.route("/_vote",methods=['GET'])
@@ -436,6 +456,45 @@ def register_vote():
     print request.args
     queue.register_vote(url=request.args.get('url'),positive=int(request.args.get('positive')),negative=int(request.args.get('negative')),creator=request.remote_addr)
     return 'OK'
+
+def get_backgrounds():
+    global backgrounds_directory
+    backgrounds = os.listdir(backgrounds_directory)
+    return backgrounds
+
+@app.route("/_set_background",methods=['GET','POST'])
+def set_background():
+    global current_background
+    lgk = LoginGatekeeper()
+    try:
+        user = None
+        if session.has_key('session_key'):
+            user = lgk.get_user(session=session['session_key'])[0]
+        if user is None:
+            raise Exception("No sufficient privileges for this operation.")
+        if user.get('privileges') in permissions.get('chbg'):
+            new_background = request.args.get('new_background')
+            logger.info("Changing background to %s"%new_background)
+            current_background = new_background
+            settings['background'] = new_background
+            exit()
+        else:
+            raise Exception("No sufficient privileges for this operation.")
+            return logout()
+    except Exception,err:
+        logger.critical(err)
+        logger.critical("Usuario sem permissões para trocar o backgorund")
+        session.pop('key',None)
+        return redirect(url_for('main'))
+    return json.dumps(dict())
+
+def get_background():
+    return current_background
+
+@atexit.register
+def exit():
+    with open(settings_path,"w+") as f:
+        json.dump(settings,f)
 
 if __name__ == '__main__':
     print "Starting Community Playlist"

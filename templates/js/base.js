@@ -4,6 +4,9 @@ var playing = 0;
 var SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 //var SCRIPT_ROOT = ""
 var itemList = $('#show-items');
+var lockBackground = false;
+var backgroundDir = '/static/images/';
+var currentBG = ''
 
 
 function periodic_updates(){    
@@ -152,9 +155,7 @@ var update_function = function(){
                     for (item in items){                    
                         var url_item = get_video_container(items[item].url,items[item].title,items[item].duration,items[item].positive,items[item].negative);
                         if($("#"+items[item].url).size() == 0){
-
-                            itemList.append(url_item);
-                            
+                            itemList.append(url_item);                            
                             $("#"+items[item].url).fadeIn(function(){});   
                         }                        
                     }
@@ -171,14 +172,34 @@ var update_function = function(){
                         queue.push({"url":item.getAttribute("id")});
                     });     
                     if(!cmp(queue,items)){
-                        console.log("Sorting");
+                        //console.log("Sorting");
                         check_index_and_sort(items)
                     };
 
                     update_index();
+
+                    // Change background
+                    if(data.backgrounds_directory != backgroundDir){
+                        backgroundDir = data.backgrounds_directory;
+                    }
+                    if(data.current_background && !lockBackground){
+                        currentBG = data.current_background;
+                        change_background(data.current_background); 
+                    }
                 } 
             );                
         };
+function change_background(background){
+    var current_background = $('body').css('background-image');
+    var new_background = 'url(/'+backgroundDir+'/'+background+')';
+    if(new_background != current_background){
+        //console.log(new_background);
+        $('body').css('background-image',new_background);
+        return true;
+    }else{
+        return false;
+    }
+};
 
 var add_function = function(newItem){
             var len = 0
@@ -395,3 +416,26 @@ function play_vinheta3(){
         document.getElementById("player_vinheta3").pause();        
     }
 };
+
+$("#background-chooser a").click(function(){
+    var choose = $(this).text()
+    lockBackground = true;
+    if(change_background(choose)){
+        currentBG = choose;
+        $("#save-background").prop("disabled",false);
+    }else{
+        lockBackground = false;
+    }
+});
+
+$("#save-background").click(function(){
+    console.log("Saving...")
+    $.getJSON( SCRIPT_ROOT+'/_set_background',
+                {new_background:currentBG},
+                function(data){
+                    //A funcao de callback nao funciona!
+                    console.log("Done!");
+                    $("#save-background").prop("disabled",true);
+                    lockBackground = false;
+                });
+});

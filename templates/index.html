@@ -14,7 +14,6 @@
   </head>
 
   <body>
-
     <div class="navbar navbar-inverse navbar-static-top">
       <div class="container">
         <div class="navbar-header">
@@ -147,6 +146,38 @@
                       <span class="vinheta_txt" id="txt_vinheta3">Empty</span>
                     </a>
                     <br>
+            </div>
+            <div class="row" id="controls">
+                <h1 class="header"> Controles </h1>
+                <div id="bg">
+                  <div class="col-md-6">
+                  <p>Background</p>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        Browse
+                        <span class="caret"></span>
+                      </button>
+                      <ul id="background-chooser" class="dropdown-menu">
+                        {% for background in backgrounds %}
+                        {% if background == current_background %}
+                        <li>
+                          <a><span class="glyphicon glyphicon-search"></span> <p>{{ background }} </p></a>
+                        </li>
+                        {% else %}
+                        <li>
+                          <a><p>{{ background }}</p></a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                      </ul>
+                      <button id="save-background" type="button" class="btn btn-default" disabled=>Save</button>
+                    </div>
+                  </div>
+                </div>
+            </div>
+          </div>
             </div>
           </div>
       {% endif %}
