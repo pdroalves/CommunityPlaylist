@@ -26,12 +26,14 @@ import re
 import binascii
 import string
 import sqlite3
+import base64
 import logging; logging.basicConfig(filename='css.log', level=logging.NOTSET, format='%(asctime)s - %(name)s - %(levelname)s:%(message)s')
 import atexit
 from time import time
 from queue_manager import QueueManager
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash, _app_ctx_stack,jsonify
 from youtube_handler import YoutubeHandler
+from Crypto.Cipher import AES
 
 logger = logging.getLogger("Main")
 # configuration
@@ -90,6 +92,9 @@ class LoginGatekeeper:
     def __init__(self,path="database.db"):
         self.logger = logging.getLogger('DB')
         self.path = path
+        default_key,db_key = get_app_secret_key()
+        assert len(db_key) % 16 == 0
+        self.cipher = AES.new(db_key,AES.MODE_ECB)
         self.create_database()
 
         ## Each operation should happen in a transaction
@@ -120,7 +125,7 @@ class LoginGatekeeper:
             self.__connect()
             self.__query("CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY,name TEXT,username TEXT UNIQUE,password TEXT,privileges INTEGER,removed INTEGER)")
             self.__query("CREATE TABLE IF NOT EXISTS session (id INTEGER PRIMARY KEY,fk_user INTEGER,created_ts INTEGER,key TEXT)")     
-            self.__query("INSERT OR IGNORE INTO user (username,password,privileges) VALUES ('admin','admin',"+str(privileges_map.get("boss"))+")")       
+            self.__query("INSERT OR IGNORE INTO user (username,password,privileges) VALUES ('%s','%s',%s)"%('admin',self.encrypt('admin'),str(privileges_map.get("boss"))))       
         finally:
             self.__close()
         return
@@ -139,7 +144,7 @@ class LoginGatekeeper:
         try:
             self.__connect()
             if credentials is not None:
-                cursor = self.__query("SELECT name,privileges,id FROM user WHERE username = \""+credentials.get('username')+"\" AND password = \""+self.encrypt(credentials.get('password'))+"\" limit 1")
+                cursor = self.__query("SELECT name,privileges,id FROM user WHERE username = \""+credentials.get('username')+"\" AND password = \""+self.encrypt(txt=credentials.get('password'))+"\" limit 1")
                 data = [dict(name=row[0],privileges=row[1],id=row[2]) for row in cursor.fetchall()]
             else:
                 cursor = self.__query("SELECT name,privileges,user.id FROM user INNER JOIN session ON user.id = session.fk_user WHERE key = \'"+session+"\' limit 1")
@@ -177,26 +182,33 @@ class LoginGatekeeper:
 
 
     def encrypt(self,txt):
-        # To-do
-        return txt
-
+        pt = txt
+        while len(pt) % 16 != 0:
+            pt = pt+'.'
+        ct = self.cipher.encrypt(pt) 
+        ct = base64.b64encode(ct)
+        return ct
+        #return txt
 
 def gen_random_key():
     return binascii.hexlify(os.urandom(24))
 
 def get_app_secret_key(path="blue.json"):
     global default_key
+    global default_db_key
     try:
         with open(path) as f:
             data = json.load(f)
-            if data.has_key('key'):
-                return data.get('key')
+            if data.has_key('key') and data.has_key('dbkey'):
+                assert len(data.get('dbkey')) % 16 == 0
+                return data.get('key'),data.get('dbkey')
             else:
                 logger.info("Couldn't get key from "+path+".\nusing default key.")
                 return default_key
     except IOError:
         logger.info("Couldn't open "+path+".\nUsing default key.")
-        return default_key
+        assert len(default_db_key) % 16 == 0
+        return default_key,default_db_key
       
 @app.context_processor
 def utility_processor():
@@ -236,7 +248,6 @@ def login():
         ## Try to log in by the session key
         if request.form['username'] is None:
             if session.has_key('session_key'):
-                print session.get('session_key')
                 user_data = lgk.get_user(session=session['session_key'])
                 if user_data is None:                    
                     session.pop('session_key',None)
@@ -250,15 +261,14 @@ def login():
             # Try to log in by normal username/password keys
             user_credentials = {
                 "username":request.form['username'],
-                "password":lgk.encrypt(request.form['password'])
-                }      
+                "password":request.form['password']
+                }
             logger.info("Login: %s" % str(user_credentials))
             user_data = lgk.get_user(credentials=user_credentials)
             if len(user_data) > 0 :
                 ## Try to log in user by the credentials provided
                 session_key = gen_random_key()
                 session['session_key'] = session_key
-                print session['session_key']
                 #session['boss'] = user_data.get('privileges') == privileges_map.get('boss')
                 lgk.set_user_session({"fk_user":user_data[0].get('id'),"key":session_key})
                 logger.critical("Usuario logado "+user_credentials.get('username'))
@@ -517,6 +527,7 @@ def exit():
 
 if __name__ == '__main__':
     print "Starting Community Playlist"
-    app.secret_key = get_app_secret_key()
+    key,dummy = get_app_secret_key()
+    app.secret_key = key
     #app.run(debug=False,host='0.0.0.0')
     app.run(debug=True)
