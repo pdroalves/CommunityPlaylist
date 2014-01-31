@@ -481,7 +481,10 @@ def rm_url():
 def register_vote():
     global queue
     print request.args
-    queue.register_vote(url=request.args.get('url'),positive=int(request.args.get('positive')),negative=int(request.args.get('negative')),creator=request.remote_addr)
+    r = queue.register_vote(url=request.args.get('url'),positive=int(request.args.get('positive')),negative=int(request.args.get('negative')),creator=request.remote_addr)
+    if not r:
+        logger.critical("Error on vote.")        
+        flash("Seu voto não pôde ser registrado. Tente novamente.","error")
     return 'OK'
 
 def get_backgrounds():

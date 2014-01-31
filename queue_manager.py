@@ -236,16 +236,21 @@ class QueueManager:
 				voters.get("positive").append(creator)
 				if creator in voters.get("negative"):
 					voters.get("negative").remove(creator)
+			elif creator in voters.get("positive"):
+				raise Exception("Voto  positivo já registrado!")
 			if negative > 0 and creator not in voters.get("negative"):
 				voters.get("negative").append(creator)
 				if creator in voters.get("positive"):
 					voters.get("positive").remove(creator)
+			elif creator in voters.get("negative"):
+				raise Exception("Voto  negativo já registrado!")
 
 			element.update({"voters":voters})
 			cursor.execute("INSERT INTO vote_history (url,tag,positive,negative) VALUES (\'%s\',\'%s\',%s,%s)" % (url,creator,str(positive),str(negative)))
 			self.commit()
 			logger.info("Updating votes for "+str(element.get("url"))+": "+str(voters))
-		except:
+		except Exception,err:
+			logger.critical("Error on vote register: \t%s"%str(err))
 			return False
 		return True
 
