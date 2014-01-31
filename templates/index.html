@@ -208,16 +208,15 @@
                         {% for background in backgrounds %}
                         {% if background == current_background %}
                         <li>
-                          <a>
+                          
                             <div class="row">
                               <div class="col-md-1">
                                 <span class="glyphicon glyphicon-check"></span>
                               </div>
                               <div class="col-md-1">
-                                <p>{{ background }} </p>
+                                <a><p>{{ background }} </p></a>                          
                               </div>
                             </div>
-                          </a>
                         </li>
                         {% else %}
                         <li>
